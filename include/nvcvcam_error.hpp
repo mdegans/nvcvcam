@@ -55,9 +55,9 @@ const char* error_string(CUresult retcode) {
   // if (cuGetErrorString(retcode, &errmsg) != CUDA_SUCCESS) {
   //   errmsg = "unknown";
   // }
-  return "code" + retcode;
-  // (void)retcode;
-  // return "i have no earthly clue where cuGetErrorString lives";
+  // return "code" + retcode;
+  (void)retcode;
+  return "i have no earthly clue where cuGetErrorString lives";
 }
 
 const char* error_string(cudaError_t retcode) {
