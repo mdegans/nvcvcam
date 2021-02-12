@@ -1,0 +1,51 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# IDE things
+.vscode/
+
+# Build Directories
+build/
+builddir/
+build-clang/
+build-no-qt/
+build-no-flashfire/
+build-all-disabled/
+
+# Test Data Directories
+test/data/
+
+# images
+*.tiff
+*.png
+*.jpg
