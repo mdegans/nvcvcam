@@ -13,12 +13,12 @@
 
 namespace nvcvcam::version {
 
-const unsigned int MAJOR = @proj_ver_major@;
-const unsigned int MINOR = @proj_ver_minor@;
-const unsigned int PATCH = @proj_ver_patch@;
-const char* LONG = "@version@-@proj_ver_git@";
-const char* SHORT = "@proj_ver_short@";
-const char* GIT = "@proj_ver_git@";
+const unsigned int MAJOR = @PROJECT_VERSION_MAJOR@;
+const unsigned int MINOR = @PROJECT_VERSION_MINOR@;
+const unsigned int PATCH = @PROJECT_VERSION_PATCH@;
+const char* LONG = "@PROJECT_VERSION@.@PROJECT_VERSION_GIT@";
+const char* SHORT = "@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@";
+const char* GIT = "@PROJECT_VERSION_GIT@";
 
 }  // namespace nvcvcam::version
 

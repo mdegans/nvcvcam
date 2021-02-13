@@ -89,7 +89,7 @@ class NvCvCam {
    * @return true on success.
    * @return false on failure.
    */
-  bool read(cv::cuda::GpuMat& out);
+  virtual bool read(cv::cuda::GpuMat& out);
 };
 
 }  // namespace nvcvcam

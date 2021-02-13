@@ -23,7 +23,7 @@ void setup_logging(const char* logfile) {
 int main() {
   setup_logging(LOGFILE);
 
-  auto camera = nvcvcam::NvCvCam();
+  nvcvcam::NvCvCam camera;
   cv::cuda::GpuMat frame;
 
   assert(camera.open());
