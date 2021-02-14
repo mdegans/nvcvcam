@@ -10,6 +10,12 @@ set(TESTS
 
 foreach(test IN LISTS TESTS)
   add_executable("${test}" "${test}.cpp")
-  target_compile_definitions("${test}" PRIVATE "LOGFILE=\"${test}.txt\"")
-  target_link_libraries("${test}" "${PROJECT_NAME}" Boost::log)
+  target_include_directories("${PROJECT_NAME}"
+    PUBLIC
+    ${Boost_INCLUDE_DIR})
+  target_compile_definitions("${test}"
+    PRIVATE
+      "LOGFILE=\"${test}.txt\""
+      "-DBOOST_LOG_DYN_LINK")
+  target_link_libraries("${test}" "${PROJECT_NAME}" ${Boost_LIBRARIES})
 endforeach()

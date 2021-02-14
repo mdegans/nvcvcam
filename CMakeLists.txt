@@ -62,6 +62,7 @@ target_include_directories("${PROJECT_NAME}"
   ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
   ${NVMMAPI_INCLUDE_DIR}
   ${OpenCV_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
 )
 
 # libraries for all targets
@@ -73,8 +74,12 @@ target_link_libraries("${PROJECT_NAME}"
   ${NVMMAPI_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${CUDA_LIBRARIES}
-  Boost::log
+  ${Boost_LIBRARIES}
 )
+
+target_compile_definitions("${PROJECT_NAME}"
+  PRIVATE
+    "-DBOOST_LOG_DYN_LINK")
 
 # absolute must have tests
 add_subdirectory(test)
