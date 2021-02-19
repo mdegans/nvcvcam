@@ -1,3 +1,6 @@
+#ifndef EF3D5456_D6DE_4825_9D87_B3655837B3D3
+#define EF3D5456_D6DE_4825_9D87_B3655837B3D3
+
 #include <Argus/Argus.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -50,6 +53,8 @@ std::string string_format(const std::string& format, Args... args) {
 
 #define CUDA_OK(ret) (ret != cudaSuccess)
 
+namespace nvcvcam {
+
 const char* error_string(CUresult retcode) {
   // const char* errmsg;
   // if (cuGetErrorString(retcode, &errmsg) != CUDA_SUCCESS) {
@@ -64,7 +69,5 @@ const char* error_string(cudaError_t retcode) {
   return cudaGetErrorString(retcode);
 }
 
-const char* error_string(Argus::Status retcode) {
-  // FIXME(mdegans)
-  return "code " + retcode;
-}
+}  // namespace nvcvcam
+#endif /* EF3D5456_D6DE_4825_9D87_B3655837B3D3 */

@@ -27,34 +27,56 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AB2EED93_4195_4CAC_985B_E33C72B28D78
-#define AB2EED93_4195_4CAC_985B_E33C72B28D78
+#ifndef F3BA22E3_6D3F_48E7_81A6_F33CB155167B
+#define F3BA22E3_6D3F_48E7_81A6_F33CB155167B
 
-// clang-format off
+#include "stoppable_thread.hpp"
 
-namespace nvcvcam::version {
+#include <Argus/Argus.h>
 
-const unsigned int MAJOR = @PROJECT_VERSION_MAJOR@;
-const unsigned int MINOR = @PROJECT_VERSION_MINOR@;
-const unsigned int PATCH = @PROJECT_VERSION_PATCH@;
-const char* LONG = "@PROJECT_VERSION@.@PROJECT_VERSION_GIT@";
-const char* SHORT = "@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@";
-const char* GIT = "@PROJECT_VERSION_GIT@";
+namespace nvcvcam {
 
-}  // namespace nvcvcam::version
+class Producer : public thread::StoppableThread {
+  uint _csi_id;
+  uint _csi_mode;
 
-namespace nvcvcam::defaults
-{
+  Argus::UniqueObj<Argus::CameraProvider> _provider;
+  Argus::ICameraProvider* _iprovider;
+  Argus::CameraDevice* _device;
+  Argus::SensorMode* _mode;
+  Argus::ISensorMode* _imode;
+  Argus::UniqueObj<Argus::CaptureSession> _session;
+  Argus::ICaptureSession* _isession;
+  Argus::UniqueObj<Argus::OutputStreamSettings> _settings;
+  Argus::IEGLOutputStreamSettings* _isettings;
+  Argus::UniqueObj<Argus::OutputStream> _stream;
+  Argus::IEGLOutputStream* _istream;
+  Argus::UniqueObj<Argus::Request> _request;
+  Argus::IRequest* _irequest;
+  Argus::ISourceSettings* _isourcesettings;
 
-// TODO(mdegans): add these to meson options
+ protected:
+  virtual bool setup();
+  virtual bool tick();
+  virtual bool cleanup();
 
-/**  Id of the csi device (usually 0) */
-const unsigned int CSI_ID = 0;
-/** CSI Mode for libargus () */
-const unsigned int CSI_MODE = 0;
+  virtual Argus::ICameraProperties* get_properties();
 
-} // namespace nvcvcam::defaults
+  bool set_mode(Argus::SensorMode* mode);
+  bool set_mode(uint32_t csi_mode);
 
-// clang-format on
+ public:
+  Producer(uint csi_id = 0, uint csi_mode = 0)
+      : _csi_id(csi_id), _csi_mode(csi_mode){};
+  virtual ~Producer();
 
-#endif /* AB2EED93_4195_4CAC_985B_E33C72B28D78 */
+  // bool enqueue_request(uint64_t timeout_ns = -1);
+  Argus::ISensorMode* get_imode();
+  std::vector<Argus::SensorMode*> get_modes();
+  bool get_resolution(Argus::Size2D<uint32_t>& out);
+  Argus::OutputStream* get_output_stream();
+};
+
+}  // namespace nvcvcam
+
+#endif /* F3BA22E3_6D3F_48E7_81A6_F33CB155167B */

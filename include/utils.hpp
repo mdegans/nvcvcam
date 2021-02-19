@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2017-2020, NVIDIA CORPORATION. All rights reserved.
- * Copyright (C) 2021 Michael de Gans. All rights reserved.
+ * Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
+ *
+ * mdegans wuz here - adapted from cudaBayerDemosaic mmapi sample
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,34 +28,34 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef AB2EED93_4195_4CAC_985B_E33C72B28D78
-#define AB2EED93_4195_4CAC_985B_E33C72B28D78
+#ifndef BC3C4619_AD73_4F51_BF00_F761D7D3D5C0
+#define BC3C4619_AD73_4F51_BF00_F761D7D3D5C0
 
-// clang-format off
+#include <Argus/Argus.h>
 
-namespace nvcvcam::version {
+namespace nvcvcam::utils {
 
-const unsigned int MAJOR = @PROJECT_VERSION_MAJOR@;
-const unsigned int MINOR = @PROJECT_VERSION_MINOR@;
-const unsigned int PATCH = @PROJECT_VERSION_PATCH@;
-const char* LONG = "@PROJECT_VERSION@.@PROJECT_VERSION_GIT@";
-const char* SHORT = "@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@";
-const char* GIT = "@PROJECT_VERSION_GIT@";
+/**
+ * @brief Get the Camera Device object from a CameraProvider.
+ *
+ * @param cameraProvider
+ * @param cameraDeviceIndex
+ *
+ * @return Argus::CameraDevice*
+ */
+Argus::CameraDevice* getCameraDevice(Argus::ICameraProvider* iProvider,
+                                     uint32_t csi_id);
 
-}  // namespace nvcvcam::version
+/**
+ * @brief Get the SensorMode from a CameraDevice.
+ *
+ * @param cameraDevice device to get the sensor mode from
+ * @param csi_mode requested sensor mode
+ *
+ * @return Argus::SensorMode*
+ */
+Argus::SensorMode* getSensorMode(Argus::CameraDevice* cameraDevice,
+                                 uint32_t csi_mode);
 
-namespace nvcvcam::defaults
-{
-
-// TODO(mdegans): add these to meson options
-
-/**  Id of the csi device (usually 0) */
-const unsigned int CSI_ID = 0;
-/** CSI Mode for libargus () */
-const unsigned int CSI_MODE = 0;
-
-} // namespace nvcvcam::defaults
-
-// clang-format on
-
-#endif /* AB2EED93_4195_4CAC_985B_E33C72B28D78 */
+}  // namespace nvcvcam::utils
+#endif /* BC3C4619_AD73_4F51_BF00_F761D7D3D5C0 */

@@ -28,51 +28,72 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "nvcvcam.hpp"
-#include "demosaic_kernel.hpp"
+#include "utils.hpp"
 #include "nvcvcam_error.hpp"
 
-#include <cudaEGL.h>
-#include <cuda_runtime.h>
-#include <nvbuf_utils.h>
+/**
+ * Modified copypasta from the MMAPI samples.
+ */
+namespace nvcvcam::utils {
 
-namespace nvcvcam {
+Argus::CameraDevice* getCameraDevice(Argus::ICameraProvider* iProvider,
+                                     uint32_t csi_id) {
+  Argus::Status status;
+  std::vector<Argus::CameraDevice*> devices;
 
-bool NvCvCam::open(uint32_t csi_id,
-                   uint32_t csi_mode,
-                   bool block,
-                   uint64_t timeout_ns) {
-  _producer.reset(new Producer(csi_id, csi_mode));
-  if (!_producer->start(block, timeout_ns)) {
-    ERROR << "nvcvcam:Could not start Producer.";
-    return false;
-  }
-  _consumer.reset(new Consumer(_producer->get_output_stream()));
-  if (!_consumer->start(block, timeout_ns)) {
-    ERROR << "nvcvcam:Could not start Consumer.";
-    return false;
-  }
-
-  return true;
-}
-
-bool NvCvCam::close(bool block, uint64_t timeout_ns) {
-  INFO << "nvcvcam:Closing camera.";
-  return (_producer->stop(block, timeout_ns) &&
-          _consumer->stop(block, timeout_ns));
-}
-
-std::unique_ptr<Frame> NvCvCam::capture() {
-  if (!(_producer && _consumer)) {
-    ERROR << "nvcvcam:Camera is not yet open.";
+  if (!iProvider) {
+    ERROR << "invalid argument. no ICameraProvider supplied";
     return nullptr;
   }
-  if (!_producer->ready() && _consumer->ready()) {
-    ERROR << "nvcvcam:Camera is not yet ready.";
+
+  status = iProvider->getCameraDevices(&devices);
+  if (status != Argus::STATUS_OK) {
+    ERROR << "failed to get camera devices from provider because: "
+          << "status " << status;
     return nullptr;
   }
-  DEBUG << "nvcvcam:Getting frame from consumer.";
-  return _consumer->get_frame();
+  if (devices.size() == 0) {
+    ERROR << "no camera devices are available";
+    return nullptr;
+  }
+  if (devices.size() <= csi_id) {
+    ERROR << "requested csi_id does not exist. valid: 0 to "
+          << devices.size() - 1;
+    return nullptr;
+  }
+
+  return devices[csi_id];
 }
 
-}  // namespace nvcvcam
+Argus::SensorMode* getSensorMode(Argus::CameraDevice* cameraDevice,
+                                 uint32_t csi_mode) {
+  std::vector<Argus::SensorMode*> modes;
+  Argus::ICameraProperties* properties;
+  Argus::Status status;
+
+  properties = Argus::interface_cast<Argus::ICameraProperties>(cameraDevice);
+  if (!properties) {
+    ERROR << "Failed to get ICameraProperties interface";
+    return nullptr;
+  }
+
+  status = properties->getAllSensorModes(&modes);
+  if (status != Argus::STATUS_OK) {
+    ERROR << "Failed to get sensor modes from device.";
+    return nullptr;
+  }
+
+  if (modes.size() == 0) {
+    ERROR << "No sensor modes are available.";
+    return nullptr;
+  }
+
+  if (modes.size() <= csi_mode) {
+    ERROR << "requested csi_id does not exist. valid: 0 to "
+          << modes.size() - 1;
+    return nullptr;
+  }
+
+  return modes[csi_mode];
+}
+}  // namespace nvcvcam::utils

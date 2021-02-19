@@ -31,8 +31,13 @@ nvcvcam_deps = [
 ]
 
 nvcvcam_src = [
-  'nvcvcam.cpp',
+  'consumer.cpp',
   'demosaic_kernel.cu',
+  'frame.cpp',
+  'nvcvcam.cpp',
+  'producer.cpp',
+  'stoppable_thread.cpp',
+  'utils.cpp',
 ]
 
 libnvcvcam_libname = meson.project_name() + '-' + proj_ver_short

@@ -10,18 +10,30 @@
 #include "nvcvcam.hpp"
 
 #include <boost/log/expressions.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup.hpp>
 #include <boost/log/utility/setup/file.hpp>
 
 #include <assert.h>
 
-void setup_logging(const char* logfile) {
-  boost::log::add_file_log(logfile);
+void setup_logging() {
+  boost::log::register_simple_formatter_factory<
+      boost::log::trivial::severity_level, char>("Severity");
+  boost::log::add_file_log(
+      LOGFILE, boost::log::keywords::auto_flush = true,
+      boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%");
+  boost::log::add_console_log(
+      std::cout,
+      boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%");
   boost::log::core::get()->set_filter(boost::log::trivial::severity >=
                                       boost::log::trivial::debug);
+  boost::log::add_common_attributes();
 }
 
 int main() {
-  setup_logging(LOGFILE);
+  setup_logging();
+
+  BOOST_LOG_TRIVIAL(info) << "starting test open close";
 
   nvcvcam::NvCvCam camera;
 
