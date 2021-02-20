@@ -33,12 +33,13 @@ void setup_logging() {
 int main() {
   setup_logging();
 
-  BOOST_LOG_TRIVIAL(info) << "starting test open close";
+  BOOST_LOG_TRIVIAL(info) << "starting test " << TESTNAME;
 
   nvcvcam::NvCvCam camera;
 
   assert(camera.open());
   assert(camera.close());
 
+  BOOST_LOG_TRIVIAL(info) << "exiting test " << TESTNAME;
   return 0;
 }

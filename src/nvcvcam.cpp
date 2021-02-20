@@ -41,14 +41,14 @@ namespace nvcvcam {
 bool NvCvCam::open(uint32_t csi_id,
                    uint32_t csi_mode,
                    bool block,
-                   uint64_t timeout_ns) {
+                   std::chrono::nanoseconds timeout) {
   _producer.reset(new Producer(csi_id, csi_mode));
-  if (!_producer->start(block, timeout_ns)) {
+  if (!_producer->start(block, timeout)) {
     ERROR << "nvcvcam:Could not start Producer.";
     return false;
   }
   _consumer.reset(new Consumer(_producer->get_output_stream()));
-  if (!_consumer->start(block, timeout_ns)) {
+  if (!_consumer->start(block, timeout)) {
     ERROR << "nvcvcam:Could not start Consumer.";
     return false;
   }
@@ -56,10 +56,9 @@ bool NvCvCam::open(uint32_t csi_id,
   return true;
 }
 
-bool NvCvCam::close(bool block, uint64_t timeout_ns) {
+bool NvCvCam::close(bool block, std::chrono::nanoseconds timeout) {
   INFO << "nvcvcam:Closing camera.";
-  return (_producer->stop(block, timeout_ns) &&
-          _consumer->stop(block, timeout_ns));
+  return (_producer->stop(block, timeout) && _consumer->stop(block, timeout));
 }
 
 std::unique_ptr<Frame> NvCvCam::capture() {

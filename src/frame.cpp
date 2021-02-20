@@ -12,12 +12,14 @@ namespace nvcvcam {
 
 Frame::Frame(CUgraphicsResource resource,
              CUeglStreamConnection conn,
-             cudaStream_t stream) {
+             cudaStream_t stream)
+    : _resource(resource), _conn(conn), _stream(stream), _raw_frame{}, _mat() {
   CUresult cu_err;
 
+  DEBUG << "frame:Mapping from resource.";
   cu_err = cuGraphicsResourceGetMappedEglFrame(&_raw_frame, resource, 0, 0);
   if (cu_err) {
-    ERROR << "frame:Could not map CUgraphicsResource to CUeglFrame";
+    ERROR << "frame:Could not map CUgraphicsResource to CUeglFrame.";
     return;
   }
 
@@ -45,6 +47,7 @@ bool Frame::get_debayered(cv::cuda::GpuMat& out,
 Frame::~Frame() {
   CUresult cu_err;
 
+  DEBUG << "frame:releasing resource in stream " << (size_t)_stream;
   cu_err = cuEGLStreamConsumerReleaseFrame(&_conn, _resource, &_stream);
   if (cu_err) {
     ERROR << "frame:Could release resource.";

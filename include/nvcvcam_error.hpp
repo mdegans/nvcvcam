@@ -55,19 +55,10 @@ std::string string_format(const std::string& format, Args... args) {
 
 namespace nvcvcam {
 
-const char* error_string(CUresult retcode) {
-  // const char* errmsg;
-  // if (cuGetErrorString(retcode, &errmsg) != CUDA_SUCCESS) {
-  //   errmsg = "unknown";
-  // }
-  // return "code" + retcode;
-  (void)retcode;
-  return "i have no earthly clue where cuGetErrorString lives";
-}
+const char* error_string(CUresult retcode);
 
-const char* error_string(cudaError_t retcode) {
-  return cudaGetErrorString(retcode);
-}
+const char* error_string(cudaError_t retcode);
 
 }  // namespace nvcvcam
+
 #endif /* EF3D5456_D6DE_4825_9D87_B3655837B3D3 */

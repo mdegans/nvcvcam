@@ -39,6 +39,7 @@ namespace nvcvcam {
 class Producer : public thread::StoppableThread {
   uint _csi_id;
   uint _csi_mode;
+  uint32_t _fifo_length;
 
   Argus::UniqueObj<Argus::CameraProvider> _provider;
   Argus::ICameraProvider* _iprovider;
@@ -56,24 +57,102 @@ class Producer : public thread::StoppableThread {
   Argus::ISourceSettings* _isourcesettings;
 
  protected:
+  /**
+   * @brief Sets up the producer for capture.
+   *
+   * @return true on success
+   * @return false on failure
+   */
   virtual bool setup();
+  /**
+   * @brief This implementation of `tick` enqueues capture requests while the
+   * FIFO buffer is not full.
+   *
+   * @return on success (continues iteration)
+   * @return on failure (superclass will set failed status and call cleanup).
+   */
   virtual bool tick();
+  /**
+   * @brief Clean up any camera resources held by the producer.
+   *
+   * @return true on success
+   * @return false on failure
+   */
   virtual bool cleanup();
 
+  /**
+   * @brief Get the Camera's properites interface.
+   *
+   * @return Argus::ICameraProperties*
+   */
   virtual Argus::ICameraProperties* get_properties();
 
+  /**
+   * @brief Set the camera sensor mode on anything needed for capture.
+   *
+   * NOTE: this will probably be public later
+   *
+   * @param mode a valid Argus sensor mode (eg. from get_modes()).
+   *
+   * @return true on success
+   * @return false on failure
+   */
   bool set_mode(Argus::SensorMode* mode);
+  /**
+   * @brief Set the camera sensor mode on anything needed for capture.
+   *
+   * NOTE: this will probably be public later
+   *
+   * @param mode a valid Argus sensor mode number as uint32_t.
+   *
+   * @return true on success
+   * @return false on failure
+   */
   bool set_mode(uint32_t csi_mode);
+  /**
+   * @brief Request Argus to perform a capture.
+   *
+   * @param timeout before failure.
+   *
+   * @return true on success
+   * @return false on failure
+   */
+  bool enqueue_request(
+      std::chrono::nanoseconds timeout = std::chrono::nanoseconds::max());
 
  public:
-  Producer(uint csi_id = 0, uint csi_mode = 0)
-      : _csi_id(csi_id), _csi_mode(csi_mode){};
+  Producer(uint csi_id = 0, uint csi_mode = 0, uint32_t fifo_length = 2)
+      : _csi_id(csi_id), _csi_mode(csi_mode), _fifo_length(fifo_length){};
   virtual ~Producer();
 
-  // bool enqueue_request(uint64_t timeout_ns = -1);
+  /**
+   * @brief Get the current sensor mode interface.
+   *
+   * @return Argus::ISensorMode*
+   * @return nullptr on failure
+   */
   Argus::ISensorMode* get_imode();
+  /**
+   * @brief Get all supported camera modes for the currently selected camera.
+   *
+   * @return std::vector<Argus::SensorMode*>
+   */
   std::vector<Argus::SensorMode*> get_modes();
+  /**
+   * @brief Get the active resolution.
+   *
+   * @param out the resolution to set.
+   *
+   * @return true on success
+   * @return false on failure
+   */
   bool get_resolution(Argus::Size2D<uint32_t>& out);
+  /**
+   * @brief Get a pointer to the OutputStream owned by this object. The pointer
+   * is valid so long as the producer is `ready()`.
+   *
+   * @return Argus::OutputStream*
+   */
   Argus::OutputStream* get_output_stream();
 };
 

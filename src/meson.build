@@ -1,3 +1,5 @@
+#ifndef DFFB9513_C1EE_4EAD_AD16_80CC4C1A3D30
+#define DFFB9513_C1EE_4EAD_AD16_80CC4C1A3D30
 # Copyright (C) 2020 Michael de Gans
 
 # This build file may be modified and distributed under the terms
@@ -34,6 +36,7 @@ nvcvcam_src = [
   'consumer.cpp',
   'demosaic_kernel.cu',
   'frame.cpp',
+  'nvcvcam_error.cpp',
   'nvcvcam.cpp',
   'producer.cpp',
   'stoppable_thread.cpp',
@@ -54,3 +57,4 @@ nvcvcam_pc = pkg.generate(libnvcvcam,
   url: project_url,
   install_dir: get_option('datadir') / 'pkgconfig',
 )
+#endif /* DFFB9513_C1EE_4EAD_AD16_80CC4C1A3D30 */

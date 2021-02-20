@@ -8,6 +8,7 @@
 #define E589C439_F4B4_4D67_9114_8A83FA001DB2
 
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <thread>
 
@@ -79,32 +80,36 @@ class StoppableThread {
    * @brief start the thread
    *
    * @param block until ready
-   * @param timeout_ns to block for if block
+   * @param timeout to block for if block (default is forever)
    *
    * @return true on success
    * @return false on failure
    */
-  bool start(bool block = true, uint64_t timeout_ns = -1);
+  bool start(
+      bool block = true,
+      std::chrono::nanoseconds timeout = std::chrono::nanoseconds::max());
   /**
    * @brief wait until a thread state
    *
    * @param state to wait until. `State` can be combined with bitwise operators.
-   * @param timeout_ns to wait for
+   * @param timeout to wait for (default is forever)
    * @return true
    * @return false
    */
-  bool wait(State state, uint64_t timeout_ns = -1);
+  bool wait(State state,
+            std::chrono::nanoseconds timeout = std::chrono::nanoseconds::max());
   /**
    * @brief stop the thread. if already stopped does nothing.
    *
    * NOTE: called by destructor automatically
    *
    * @param block until ready
-   * @param timeout_ns to block for if block
+   * @param timeout to block for if block (default is forever)
    * @return true
    * @return false
    */
-  bool stop(bool block = true, uint64_t timeout_ns = -1);
+  bool stop(bool block = true,
+            std::chrono::nanoseconds timeout = std::chrono::nanoseconds::max());
   /**
    * @brief query the state of the thread.
    *

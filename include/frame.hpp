@@ -21,31 +21,26 @@ struct DebayerGains {
 };
 
 class Frame {
+ public:
+  Frame(Frame const&) = delete;
+  Frame(CUgraphicsResource resource,
+        CUeglStreamConnection conn,
+        cudaStream_t stream = nullptr);
+  virtual ~Frame();
+
+  Frame& operator=(Frame const&) = delete;
+
+  cv::cuda::GpuMat& gpu_mat() { return _mat; }
+  bool get_debayered(cv::cuda::GpuMat& out,
+                     const DebayerGains& gains,
+                     cv::cuda::Stream& stream = cv::cuda::Stream::Null());
+
+ private:
   CUgraphicsResource _resource;
   CUeglStreamConnection _conn;
   cudaStream_t _stream;
   CUeglFrame _raw_frame;
   cv::cuda::GpuMat _mat;
-
- public:
-  Frame(Frame const&) = delete;
-  Frame(CUgraphicsResource resource,
-        CUeglStreamConnection conn,
-        cudaStream_t stream = nullptr)
-      : _resource(resource),
-        _conn(conn),
-        _stream(stream),
-        _raw_frame{},
-        _mat(){};
-  virtual ~Frame();
-
-  Frame& operator=(Frame const&) = delete;
-
-  bool empty() { return _mat.empty(); }
-  cv::cuda::GpuMat& gpu_mat() { return _mat; }
-  bool get_debayered(cv::cuda::GpuMat& out,
-                     const DebayerGains& gains,
-                     cv::cuda::Stream& stream = cv::cuda::Stream::Null());
 };
 
 }  // namespace nvcvcam

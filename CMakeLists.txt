@@ -52,6 +52,7 @@ add_library("${PROJECT_NAME}" SHARED
   src/consumer.cpp
   src/demosaic_kernel.cu
   src/frame.cpp
+  src/nvcvcam_error.cpp
   src/nvcvcam.cpp
   src/producer.cpp
   src/stoppable_thread.cpp

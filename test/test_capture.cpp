@@ -33,15 +33,16 @@ void setup_logging() {
 int main() {
   setup_logging();
 
-  BOOST_LOG_TRIVIAL(info) << "starting test capture";
+  BOOST_LOG_TRIVIAL(info) << "starting test " << TESTNAME;
 
   nvcvcam::NvCvCam camera;
-  cv::cuda::GpuMat frame;
 
   assert(camera.open());
-  assert(camera.read(frame));
-  assert(!frame.empty());
+  auto frame = camera.capture();
+  assert(frame);
+  assert(!frame->gpu_mat().empty());
   assert(camera.close());
 
+  BOOST_LOG_TRIVIAL(info) << "exiting test " << TESTNAME;
   return 0;
 }

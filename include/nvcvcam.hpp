@@ -33,14 +33,15 @@ class NvCvCam {
    * @param csi_id the CSI id of the camera.
    * @param csi_mode the Argus CSI mode to request.
    * @param block until open or timeout
-   * @param timeout_ns to wait for if block (default waits forever)
+   * @param timeout to wait for if block (default waits forever)
    * @return true on success
    * @return false on failure
    */
-  virtual bool open(uint32_t csi_id = defaults::CSI_ID,
-                    uint32_t csi_mode = defaults::CSI_MODE,
-                    bool block = true,
-                    uint64_t timeout_ns = -1);
+  virtual bool open(
+      uint32_t csi_id = defaults::CSI_ID,
+      uint32_t csi_mode = defaults::CSI_MODE,
+      bool block = true,
+      std::chrono::nanoseconds timeout = std::chrono::nanoseconds::max());
 
   /**
    * @brief close the camera and free any resources.
@@ -48,12 +49,14 @@ class NvCvCam {
    * NOTE: called automatically by destructor.
    *
    * @param block until ready
-   * @param timeout_ns to block for if block
+   * @param timeout to block for if block
    *
    * @return true
    * @return false
    */
-  virtual bool close(bool block = true, uint64_t timeout_ns = -1);
+  virtual bool close(
+      bool block = true,
+      std::chrono::nanoseconds timeout = std::chrono::nanoseconds::max());
 
   /**
    * @brief request and get the latest frame.

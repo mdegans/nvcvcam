@@ -6,16 +6,18 @@
 set(TESTS
   test_capture
   test_open_close
+  test_stoppable_thread
 )
 
 foreach(test IN LISTS TESTS)
   add_executable("${test}" "${test}.cpp")
   target_include_directories("${PROJECT_NAME}"
-    PUBLIC
+    PRIVATE
     ${Boost_INCLUDE_DIR})
   target_compile_definitions("${test}"
     PRIVATE
       "LOGFILE=\"${test}.txt\""
+      "TESTNAME=\"${test}\""
       "-DBOOST_LOG_DYN_LINK")
   target_link_libraries("${test}" "${PROJECT_NAME}" ${Boost_LIBRARIES})
 endforeach()

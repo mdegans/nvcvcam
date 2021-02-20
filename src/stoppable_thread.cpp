@@ -13,12 +13,12 @@
 
 namespace nvcvcam::thread {
 
-bool StoppableThread::start(bool block, uint64_t timeout_ns) {
+bool StoppableThread::start(bool block, std::chrono::nanoseconds timeout) {
   DEBUG << "spawning thread";
   _thread.reset(new std::thread(&StoppableThread::execute, this));
 
   if (block) {
-    return wait(State::RUNNING, timeout_ns);
+    return wait(State::RUNNING, timeout);
   }
 
   return true;
@@ -56,36 +56,40 @@ void StoppableThread::execute() {
   _stopping = false;
 }
 
-bool StoppableThread::stop(bool block, uint64_t timeout_ns) {
+bool StoppableThread::stop(bool block, std::chrono::nanoseconds timeout) {
   DEBUG << "requesting stop";
   if (_thread) {
     _stopping = true;
     if (block) {
-      return wait((State)(State::STOPPED | State::FAILED), timeout_ns);
+      bool success = wait(State::STOPPED, timeout);
+      DEBUG << "joining thread";
+      _thread->join();
+      _thread.reset();
+      return success;
     }
-    _thread.reset();
   }
   return true;
 }
 
-bool StoppableThread::wait(State state, uint64_t timeout_ns) {
+bool StoppableThread::wait(State state, std::chrono::nanoseconds timeout) {
   auto start_time = std::chrono::high_resolution_clock::now();
-  auto timeout = std::chrono::nanoseconds(timeout_ns);
 
   // wait for the chosen state
-  while (_state == state) {
+  DEBUG << "waiting for state: " << state << " for " << timeout.count() << "ns";
+  while (_state != state) {
     auto elapsed = std::chrono::high_resolution_clock::now() - start_time;
     if (elapsed > timeout) {
       ERROR << "timed out waiting for thread RUNNING state";
       return false;
     }
-    std::this_thread::sleep_for(std::chrono::microseconds(SLEEP_INTERVAL_NS));
+    std::this_thread::sleep_for(std::chrono::nanoseconds(SLEEP_INTERVAL_NS));
   }
 
   return true;
 }
 
 StoppableThread::~StoppableThread() {
+  DEBUG << "Destructor reached. Stopping.";
   stop();
 }
 
