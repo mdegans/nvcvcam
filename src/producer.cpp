@@ -114,6 +114,9 @@ bool Producer::setup() {
     return false;
   }
 
+  // FIXME(mdegans): after reading the docs over the weekend, it's likely the
+  //  `MAILBOX` mode is more appropriate since that's what I've implemented
+  //  anyway on the consumer side.
   err = _isettings->setMode(Argus::EGL_STREAM_MODE_FIFO);
   if (err) {
     ERROR << "producer:Could not set EGL_STREAM_MODE_FIFO";

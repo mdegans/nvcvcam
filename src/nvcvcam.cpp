@@ -42,14 +42,15 @@ bool NvCvCam::open(uint32_t csi_id,
                    uint32_t csi_mode,
                    bool block,
                    std::chrono::nanoseconds timeout) {
-  _producer.reset(new Producer(csi_id, csi_mode));
-  if (!_producer->start(block, timeout)) {
-    ERROR << "nvcvcam:Could not start Producer.";
-    return false;
-  }
+  // NOTE(medgans) order is important here. See `NOTE` in `close`.
   _consumer.reset(new Consumer(_producer->get_output_stream()));
   if (!_consumer->start(block, timeout)) {
     ERROR << "nvcvcam:Could not start Consumer.";
+    return false;
+  }
+  _producer.reset(new Producer(csi_id, csi_mode));
+  if (!_producer->start(block, timeout)) {
+    ERROR << "nvcvcam:Could not start Producer.";
     return false;
   }
 
@@ -58,7 +59,10 @@ bool NvCvCam::open(uint32_t csi_id,
 
 bool NvCvCam::close(bool block, std::chrono::nanoseconds timeout) {
   INFO << "nvcvcam:Closing camera.";
-  return (_producer->stop(block, timeout) && _consumer->stop(block, timeout));
+  // NOTE(mdegans): it's important the consumer stop before the produce since
+  //  the producer's owned resources, some of which are shared by consumer,
+  //  outlive the consumer. There is likely a better design here. PRs welcome.
+  return (_consumer->stop(block, timeout) && _producer->stop(block, timeout));
 }
 
 std::unique_ptr<Frame> NvCvCam::capture() {
