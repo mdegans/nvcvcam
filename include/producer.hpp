@@ -64,7 +64,7 @@ class Producer : public thread::StoppableThread {
    * @return true on success
    * @return false on failure
    */
-  virtual bool setup();
+  bool setup() override;
   /**
    * @brief This implementation of `tick` enqueues capture requests while the
    * FIFO buffer is not full.
@@ -72,14 +72,14 @@ class Producer : public thread::StoppableThread {
    * @return on success (continues iteration)
    * @return on failure (superclass will set failed status and call cleanup).
    */
-  virtual bool tick();
+  bool tick() override;
   /**
    * @brief Clean up any camera resources held by the producer.
    *
    * @return true on success
    * @return false on failure
    */
-  virtual bool cleanup();
+  bool cleanup() override;
   /**
    * @brief Get the Camera's properites interface.
    *
@@ -137,7 +137,7 @@ class Producer : public thread::StoppableThread {
         _request(nullptr),
         _irequest(nullptr),
         _isourcesettings(nullptr){};
-  virtual ~Producer();
+  ~Producer() override;
 
   /**
    * @brief Get the current sensor mode interface.

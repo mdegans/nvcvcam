@@ -7,8 +7,11 @@
 #include "frame.hpp"
 #include "demosaic_kernel.hpp"
 #include "nvcvcam_error.hpp"
+#include "utils.hpp"
 
 namespace nvcvcam {
+
+// this is NVIDIA's. here temporarily
 
 Frame::Frame(CUgraphicsResource resource,
              CUeglStreamConnection conn,
@@ -24,13 +27,17 @@ Frame::Frame(CUgraphicsResource resource,
     return;
   }
 
+  if (!utils::printCUDAEGLFrame(_raw_frame)) {
+    return;
+  }
+
   if (!sync()) {
     return;
   }
 
   // map the data to a GpuMat
-  _mat = cv::cuda::GpuMat(_raw_frame.height, _raw_frame.width, CV_8UC4,
-                          _raw_frame.frame.pPitch[0]);
+  _mat = cv::cuda::GpuMat(_raw_frame.height, _raw_frame.width, CV_16SC1,
+                          _raw_frame.frame.pPitch[0], _raw_frame.pitch);
 }
 
 bool Frame::sync() {

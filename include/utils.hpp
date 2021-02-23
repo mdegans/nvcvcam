@@ -33,8 +33,11 @@
 
 #include <Argus/Argus.h>
 #include <cuda.h>
+#include <cudaEGL.h>
 
 namespace nvcvcam::utils {
+
+bool printCUDAEGLFrame(const CUeglFrame& cudaEGLFrame);
 
 /**
  * @brief Initializes cuda and creates a context.

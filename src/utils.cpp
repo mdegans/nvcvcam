@@ -36,6 +36,115 @@
  */
 namespace nvcvcam::utils {
 
+bool printCUDAEGLFrame(const CUeglFrame& cudaEGLFrame) {
+  DEBUG << "CUeglFrame:";
+  DEBUG << " width: " << cudaEGLFrame.width;
+  DEBUG << " height: " << cudaEGLFrame.height;
+  DEBUG << " depth: " << cudaEGLFrame.depth;
+  DEBUG << " pitch: " << cudaEGLFrame.pitch;
+  DEBUG << " planeCount: " << cudaEGLFrame.planeCount;
+  DEBUG << " numChannels: " << cudaEGLFrame.numChannels;
+  const char* frameTypeString = NULL;
+  switch (cudaEGLFrame.frameType) {
+    case CU_EGL_FRAME_TYPE_ARRAY:
+      frameTypeString = "array";
+      break;
+    case CU_EGL_FRAME_TYPE_PITCH:
+      frameTypeString = "pitch";
+      break;
+    default:
+      ERROR << "Unknown frame type " << cudaEGLFrame.frameType;
+      return false;
+  }
+  DEBUG << " frameType: " << frameTypeString;
+  const char* colorFormatString = NULL;
+  switch (cudaEGLFrame.eglColorFormat) {
+    case CU_EGL_COLOR_FORMAT_YUV420_PLANAR:
+      colorFormatString = "YUV420 planar";
+      break;
+    case CU_EGL_COLOR_FORMAT_YUV420_SEMIPLANAR:
+      colorFormatString = "YUV420 semi-planar";
+      break;
+    case CU_EGL_COLOR_FORMAT_YUV422_PLANAR:
+      colorFormatString = "YUV422 planar";
+      break;
+    case CU_EGL_COLOR_FORMAT_YUV422_SEMIPLANAR:
+      colorFormatString = "YUV422 semi-planar";
+      break;
+    case CU_EGL_COLOR_FORMAT_YUV420_PLANAR_ER:
+      colorFormatString = "YUV420 planar ER";
+      break;
+    case CU_EGL_COLOR_FORMAT_YUV420_SEMIPLANAR_ER:
+      colorFormatString = "YUV420 semi-planar ER";
+      break;
+    case CU_EGL_COLOR_FORMAT_YUV422_PLANAR_ER:
+      colorFormatString = "YUV422 planar ER";
+      break;
+    case CU_EGL_COLOR_FORMAT_YUV422_SEMIPLANAR_ER:
+      colorFormatString = "YUV422 semi-planar ER";
+      break;
+    case CU_EGL_COLOR_FORMAT_RGB:
+      colorFormatString = "RGB";
+      break;
+    case CU_EGL_COLOR_FORMAT_BGR:
+      colorFormatString = "BGR";
+      break;
+    case CU_EGL_COLOR_FORMAT_ARGB:
+      colorFormatString = "ARGB";
+      break;
+    case CU_EGL_COLOR_FORMAT_RGBA:
+      colorFormatString = "RGBA";
+    case CU_EGL_COLOR_FORMAT_BAYER_RGGB:
+      colorFormatString = "S16 Bayer RGGB";
+      break;
+    case CU_EGL_COLOR_FORMAT_BAYER_BGGR:
+      colorFormatString = "S16 Bayer BGGR";
+      break;
+    case CU_EGL_COLOR_FORMAT_BAYER_GRBG:
+      colorFormatString = "S16 Bayer GRBG";
+      break;
+    case CU_EGL_COLOR_FORMAT_BAYER_GBRG:
+      colorFormatString = "S16 Bayer GBRG";
+      break;
+    default:
+      ERROR << "Unknown color format " << cudaEGLFrame.eglColorFormat;
+      return false;
+  }
+  DEBUG << " colorFormat: " << colorFormatString;
+  const char* cuFormatString = NULL;
+  switch (cudaEGLFrame.cuFormat) {
+    case CU_AD_FORMAT_UNSIGNED_INT8:
+      cuFormatString = "uint8";
+      break;
+    case CU_AD_FORMAT_UNSIGNED_INT16:
+      cuFormatString = "uint16";
+      break;
+    case CU_AD_FORMAT_UNSIGNED_INT32:
+      cuFormatString = "uint32";
+      break;
+    case CU_AD_FORMAT_SIGNED_INT8:
+      cuFormatString = "int8";
+      break;
+    case CU_AD_FORMAT_SIGNED_INT16:
+      cuFormatString = "int16";
+      break;
+    case CU_AD_FORMAT_SIGNED_INT32:
+      cuFormatString = "int32";
+      break;
+    case CU_AD_FORMAT_HALF:
+      cuFormatString = "float16";
+      break;
+    case CU_AD_FORMAT_FLOAT:
+      cuFormatString = "float32";
+      break;
+    default:
+      ERROR << "Unknown cuFormat " << cudaEGLFrame.cuFormat;
+  }
+  DEBUG << " cuFormat: " << cuFormatString;
+
+  return true;
+}
+
 bool init_cuda(CUcontext* ctx) {
   CUresult err;
 

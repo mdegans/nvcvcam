@@ -31,7 +31,11 @@ class NvCvCam {
         _cuda_stream(nullptr),
         _ctx(nullptr),
         _cuda_conn(nullptr){};
+  NvCvCam(const NvCvCam&) = delete;
+
   virtual ~NvCvCam() = default;
+
+  NvCvCam& operator=(const NvCvCam&) = delete;
 
   /**
    * @brief Open or re-open a camera.

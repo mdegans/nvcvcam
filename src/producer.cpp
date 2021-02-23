@@ -126,15 +126,15 @@ bool Producer::setup() {
 
   err = _isettings->setMode(Argus::EGL_STREAM_MODE_MAILBOX);
   if (err) {
-    ERROR << "producer:Could not set EGL_STREAM_MODE_FIFO";
+    ERROR << "producer:Could not set EGL_STREAM_MODE_MAILBOX";
     return false;
   }
 
-  err = _isettings->setFifoLength(_fifo_length);
-  if (err) {
-    ERROR << "producer:Could not set FifoLength to " << _fifo_length << ".";
-    return false;
-  }
+  // err = _isettings->setFifoLength(_fifo_length);
+  // if (err) {
+  //   ERROR << "producer:Could not set FifoLength to " << _fifo_length << ".";
+  //   return false;
+  // }
 
   auto res = _imode->getResolution();
   err = _isettings->setResolution(res);
