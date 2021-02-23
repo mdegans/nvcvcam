@@ -37,6 +37,7 @@
 namespace nvcvcam {
 
 class Producer : public thread::StoppableThread {
+ private:
   uint _csi_id;
   uint _csi_mode;
   uint32_t _fifo_length;
@@ -79,14 +80,12 @@ class Producer : public thread::StoppableThread {
    * @return false on failure
    */
   virtual bool cleanup();
-
   /**
    * @brief Get the Camera's properites interface.
    *
    * @return Argus::ICameraProperties*
    */
   virtual Argus::ICameraProperties* get_properties();
-
   /**
    * @brief Set the camera sensor mode on anything needed for capture.
    *
@@ -122,7 +121,22 @@ class Producer : public thread::StoppableThread {
 
  public:
   Producer(uint csi_id = 0, uint csi_mode = 0, uint32_t fifo_length = 2)
-      : _csi_id(csi_id), _csi_mode(csi_mode), _fifo_length(fifo_length){};
+      : _csi_id(csi_id),
+        _csi_mode(csi_mode),
+        _fifo_length(fifo_length),
+        _provider(nullptr),
+        _iprovider(nullptr),
+        _device(nullptr),
+        _mode(nullptr),
+        _imode(nullptr),
+        _session(nullptr),
+        _isession(nullptr),
+        _settings(nullptr),
+        _stream(nullptr),
+        _istream(nullptr),
+        _request(nullptr),
+        _irequest(nullptr),
+        _isourcesettings(nullptr){};
   virtual ~Producer();
 
   /**

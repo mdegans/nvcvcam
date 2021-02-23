@@ -36,13 +36,11 @@ int main() {
   BOOST_LOG_TRIVIAL(info) << "starting test " << TESTNAME;
 
   nvcvcam::NvCvCam camera;
-  cv::cuda::GpuMat debayered;
 
   assert(camera.open());
   auto frame = camera.capture();
   assert(frame);
   assert(!frame->gpu_mat().empty());
-  frame->get_debayered(debayered, nvcvcam::DebayerGains());
   frame.reset();
   assert(!debayered.empty());
   assert(camera.close());

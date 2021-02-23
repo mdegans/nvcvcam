@@ -33,7 +33,6 @@ nvcvcam_deps = [
 ]
 
 nvcvcam_src = [
-  'consumer.cpp',
   'demosaic_kernel.cu',
   'frame.cpp',
   'nvcvcam_error.cpp',

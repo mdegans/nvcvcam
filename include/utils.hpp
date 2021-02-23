@@ -32,8 +32,18 @@
 #define BC3C4619_AD73_4F51_BF00_F761D7D3D5C0
 
 #include <Argus/Argus.h>
+#include <cuda.h>
 
 namespace nvcvcam::utils {
+
+/**
+ * @brief Initializes cuda and creates a context.
+ *
+ * @param ctx a pointer to a cuda context
+ * @return true on success
+ * @return false on failure
+ */
+bool init_cuda(CUcontext* ctx);
 
 /**
  * @brief Get the Camera Device object from a CameraProvider.

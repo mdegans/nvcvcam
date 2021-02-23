@@ -58,6 +58,8 @@ bool Producer::setup() {
   }
   _iprovider = Argus::interface_cast<Argus::ICameraProvider>(_provider);
 
+  DEBUG << "producer:Argus version: " << _iprovider->getVersion();
+
   DEBUG << "producer:Getting camera device " << _csi_id << " from provider.";
   _device = utils::getCameraDevice(_iprovider, _csi_id);
   if (!_device) {
@@ -108,18 +110,29 @@ bool Producer::setup() {
     return false;
   }
 
+  // TODO(mdegans): add display here
+
+  err = _isettings->setMetadataEnable(true);
+  if (err) {
+    ERROR << "producer:Could not enable capture metadata.";
+    return false;
+  }
+
   err = _isettings->setPixelFormat(Argus::PIXEL_FMT_RAW16);
   if (err) {
     ERROR << "producer:Could not set RAW16 pixel format.";
     return false;
   }
 
-  // FIXME(mdegans): after reading the docs over the weekend, it's likely the
-  //  `MAILBOX` mode is more appropriate since that's what I've implemented
-  //  anyway on the consumer side.
-  err = _isettings->setMode(Argus::EGL_STREAM_MODE_FIFO);
+  err = _isettings->setMode(Argus::EGL_STREAM_MODE_MAILBOX);
   if (err) {
     ERROR << "producer:Could not set EGL_STREAM_MODE_FIFO";
+    return false;
+  }
+
+  err = _isettings->setFifoLength(_fifo_length);
+  if (err) {
+    ERROR << "producer:Could not set FifoLength to " << _fifo_length << ".";
     return false;
   }
 
@@ -128,12 +141,6 @@ bool Producer::setup() {
   if (err) {
     ERROR << "producer:IEGLOutputStreamSettings would not accept resolution: "
           << res.width() << "x" << res.height() << " (status " << err << ").";
-    return false;
-  }
-
-  err = _isettings->setFifoLength(_fifo_length);
-  if (err) {
-    ERROR << "producer:Could not set FifoLength to " << _fifo_length << ".";
     return false;
   }
 
@@ -164,9 +171,10 @@ bool Producer::setup() {
   }
 
   DEBUG << "producer:Enabling OutputStream for request.";
-  if (Argus::Status::STATUS_OK !=
-      _irequest->enableOutputStream(_stream.get())) {
-    DEBUG << "producer:Could not enable OutputStream for request.";
+  err = _irequest->enableOutputStream(_stream.get());
+  if (err) {
+    DEBUG << "producer:Could not enable OutputStream for request. (status "
+          << err << ").";
     return false;
   }
   _irequest = Argus::interface_cast<Argus::IRequest>(_request);

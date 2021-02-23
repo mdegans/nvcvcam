@@ -24,31 +24,51 @@ bool StoppableThread::start(bool block, std::chrono::nanoseconds timeout) {
   return true;
 }
 
+bool StoppableThread::run() {
+  if (_state == State::FAILED) {
+    ERROR << "stoppable:Cannot run. Thread in failed state.";
+    return false;
+  }
+
+  _state = State::RUNNING;
+  if (!on_running()) {
+    ERROR << "stoppable:`on_running` requested abort.";
+    _state = State::FAILED;
+  }
+
+  while (!_stopping && _state == State::RUNNING) {
+    if (!tick()) {
+      DEBUG << "stoppable:`tick` returned `false`. setting `FAILED` state.";
+      _state = State::FAILED;
+      return false;
+    };
+    std::this_thread::yield();
+  }
+
+  if (_state == State::FAILED) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 void StoppableThread::execute() {
   // setup the thread
   _state = State::INITIALIZING;
   if (!setup()) {
-    ERROR << "thread setup failed";
+    ERROR << "stoppable:Thread setup failed";
     _state = State::FAILED;
   };
 
   // run the main loop for this thread
-  if (_state != State::FAILED) {
-    _state = State::RUNNING;
-    while (!_stopping && _state == State::RUNNING) {
-      if (!tick()) {
-        DEBUG << "tick returned false. setting `FAILED` state.";
-        _state = State::FAILED;
-        break;
-      };
-      std::this_thread::yield();
-    }
+  if (!run()) {
+    DEBUG << "stoppable:Run failed.";
   }
 
   if (!cleanup()) {
     // Terminate here rather than leak resources.
     _state = State::FAILED;
-    ERROR << "cleanup failed. fatal. terminating.";
+    ERROR << "stoppable:Cleanup failed. Fatal. Terminating.";
     std::terminate();
   }
 
@@ -57,12 +77,12 @@ void StoppableThread::execute() {
 }
 
 bool StoppableThread::stop(bool block, std::chrono::nanoseconds timeout) {
-  DEBUG << "requesting stop";
+  DEBUG << "stoppable:Requesting stop";
   if (_thread) {
     _stopping = true;
     if (block) {
       bool success = wait(State::STOPPED, timeout);
-      DEBUG << "joining thread";
+      DEBUG << "stoppable:Joining thread.";
       _thread->join();
       _thread.reset();
       return success;
@@ -75,11 +95,12 @@ bool StoppableThread::wait(State state, std::chrono::nanoseconds timeout) {
   auto start_time = std::chrono::high_resolution_clock::now();
 
   // wait for the chosen state
-  DEBUG << "waiting for state: " << state << " for " << timeout.count() << "ns";
+  DEBUG << "stoppable:Waiting for state: " << state << " for "
+        << timeout.count() << "ns";
   while (_state != state) {
     auto elapsed = std::chrono::high_resolution_clock::now() - start_time;
     if (elapsed > timeout) {
-      ERROR << "timed out waiting for thread RUNNING state";
+      ERROR << "stoppable:Timed out waiting for thread RUNNING state.";
       return false;
     }
     std::this_thread::sleep_for(std::chrono::nanoseconds(SLEEP_INTERVAL_NS));
@@ -89,7 +110,7 @@ bool StoppableThread::wait(State state, std::chrono::nanoseconds timeout) {
 }
 
 StoppableThread::~StoppableThread() {
-  DEBUG << "Destructor reached. Stopping.";
+  DEBUG << "stoppable:Destructor reached. Stopping.";
   stop();
 }
 

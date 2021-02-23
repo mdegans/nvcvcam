@@ -31,6 +31,7 @@
 #include "nvcvcam.hpp"
 #include "demosaic_kernel.hpp"
 #include "nvcvcam_error.hpp"
+#include "utils.hpp"
 
 #include <cudaEGL.h>
 #include <cuda_runtime.h>
@@ -38,44 +39,121 @@
 
 namespace nvcvcam {
 
-bool NvCvCam::open(uint32_t csi_id,
-                   uint32_t csi_mode,
-                   bool block,
-                   std::chrono::nanoseconds timeout) {
-  // NOTE(medgans) order is important here. See `NOTE` in `close`.
-  _consumer.reset(new Consumer(_producer->get_output_stream()));
-  if (!_consumer->start(block, timeout)) {
-    ERROR << "nvcvcam:Could not start Consumer.";
+bool NvCvCam::open(uint32_t csi_id, uint32_t csi_mode) {
+  CUresult cu_err;
+  Argus::Status status;
+
+  INFO << "nvcvcam:Opening.";
+
+  DEBUG << "nvcvcam:Initializing CUDA.";
+  if (!utils::init_cuda(&_ctx)) {
+    ERROR << "nvcvcam:Cuda initialization failed.";
     return false;
   }
+
+  DEBUG << "nvcvcam:Creating CUDA stream.";
+  auto errt = cudaStreamCreate(&_cuda_stream);
+  if (errt) {
+    ERROR << "nvcvcam:Could not create CUDA stream becuase: "
+          << error_string(errt) << ".";
+    return false;
+  }
+
+  // NOTE(medgans) order is important here. See `NOTE` in `close`.
   _producer.reset(new Producer(csi_id, csi_mode));
-  if (!_producer->start(block, timeout)) {
+  if (!_producer->start()) {
     ERROR << "nvcvcam:Could not start Producer.";
     return false;
   }
 
+  auto raw_stream = _producer->get_output_stream();
+  auto iraw_stream = Argus::interface_cast<Argus::IEGLOutputStream>(raw_stream);
+  if (!iraw_stream) {
+    ERROR << "nvcvcam:Could not get OutputStream from Producer.";
+  }
+
+  DEBUG << "nvcvcam:Connecting to producer.";
+  cu_err = cuEGLStreamConsumerConnect(&_cuda_conn, iraw_stream->getEGLStream());
+  if (cu_err) {
+    ERROR << "nvcvcam:Could not connect CUDA to OutputStream because: "
+          << error_string(cu_err) << ".";
+    return false;
+  }
+  status = iraw_stream->waitUntilConnected();
+  if (status) {
+    ERROR << "nvcvcam:Could not connect OutputStream becuase: (status "
+          << status << ").";
+  }
+  DEBUG << "nvcvcam:Connected to producer.";
+
   return true;
 }
 
-bool NvCvCam::close(bool block, std::chrono::nanoseconds timeout) {
+bool NvCvCam::close() {
+  CUresult err;
+  bool success = true;
+
+  if (!_producer) {
+    ERROR << "nvcvcam:Camera is not yet open.";
+    return false;
+  }
+  if (!_producer->ready()) {
+    ERROR << "nvcvcam:Camera is not yet ready.";
+    return false;
+  }
+
   INFO << "nvcvcam:Closing camera.";
-  // NOTE(mdegans): it's important the consumer stop before the produce since
-  //  the producer's owned resources, some of which are shared by consumer,
-  //  outlive the consumer. There is likely a better design here. PRs welcome.
-  return (_consumer->stop(block, timeout) && _producer->stop(block, timeout));
+  success = _producer->stop();
+
+  DEBUG << "nvcvcam:Disconnecting from producer.";
+  err = cuEGLStreamConsumerDisconnect(&_cuda_conn);
+  if (err) {
+    ERROR << "nvcvcam:Could not disconnect from producer stream because: "
+          << error_string(err) << ".";
+    success = false;
+  }
+
+  DEBUG << "nvcvcam:Destroying CUDA stream.";
+  auto errt = cudaStreamDestroy(_cuda_stream);
+  if (errt) {
+    ERROR << "nvcvcam:Could not destroy CUDA stream because: "
+          << error_string(errt) << ".";
+    success = false;
+  }
+
+  DEBUG << "nvcvcam:Destroying CUDA context.";
+  err = cuCtxDestroy(_ctx);
+  if (err) {
+    ERROR << "nvcvcam:Could not destroy cuda context because: "
+          << error_string(err) << ".";
+    success = false;
+  }
+
+  return success;
 }
 
 std::unique_ptr<Frame> NvCvCam::capture() {
-  if (!(_producer && _consumer)) {
+  CUgraphicsResource tmp_res = nullptr;
+
+  if (!_producer) {
     ERROR << "nvcvcam:Camera is not yet open.";
     return nullptr;
   }
-  if (!_producer->ready() && _consumer->ready()) {
+  if (!_producer->ready()) {
     ERROR << "nvcvcam:Camera is not yet ready.";
     return nullptr;
   }
-  DEBUG << "nvcvcam:Getting frame from consumer.";
-  return _consumer->get_frame();
+
+  DEBUG << "nvcvcam:Getting an image from the EGLStream.";
+  if (auto cu_err = cuEGLStreamConsumerAcquireFrame(&_cuda_conn, &tmp_res,
+                                                    &_cuda_stream, -1)) {
+    ERROR << "nvcvcam:Could not get image from the EglStream becuase: "
+          << error_string(cu_err) << ".";
+    return nullptr;
+  }
+
+  DEBUG << "nvcvcam:Returning Frame.";
+  return std::make_unique<Frame>(tmp_res, _cuda_conn, _cuda_stream);
 }
 
 }  // namespace nvcvcam

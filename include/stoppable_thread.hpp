@@ -40,8 +40,7 @@ class StoppableThread {
   std::unique_ptr<std::thread> _thread;
 
   /**
-   * @brief main loop of the thread. Runs `tick` in a loop while `!_stopping`
-   * and `_state` == `State::RUNNING`. Calls cleanup for you on exit.
+   * @brief Main thread function. Calls setup, run, cleanup.
    *
    * @return true on success
    * @return false on failure
@@ -56,6 +55,22 @@ class StoppableThread {
    * @return false on failure
    */
   virtual bool setup() { return true; };
+  /**
+   * @brief called just after `run` sets the running state. Override if you need
+   * to do something before the first iteration.
+   *
+   * @return true to continue
+   * @return false to abort
+   */
+  virtual bool on_running() { return true; }
+  /**
+   * @brief main loop of the thread. Runs `tick` in a loop while `!_stopping`
+   * and `_state` == `State::RUNNING`. Calls cleanup for you on exit.
+   *
+   * @return true if tick returned true
+   * @return false if tick returned false or `
+   */
+  virtual bool run();
   /**
    * @brief an iteration of the thread loop
    *

@@ -36,6 +36,52 @@
  */
 namespace nvcvcam::utils {
 
+bool init_cuda(CUcontext* ctx) {
+  CUresult err;
+
+  if (!ctx) {
+    ERROR << "init_cuda:CUDA context NULL.";
+    return false;
+  }
+
+  err = cuInit(0);
+  if (err) {
+    ERROR << "init_cuda:Unable to initialize the CUDA driver API because: "
+          << error_string(err) << ".";
+    return false;
+  }
+
+  int dev_count = 0;
+  err = cuDeviceGetCount(&dev_count);
+  if (err) {
+    ERROR << "init_cuda:Unable to get CUDA device count because: "
+          << error_string(err) << ".";
+    return false;
+  }
+
+  if (!dev_count) {
+    ERROR << "init_cuda:Unable to find any CUDA devices.";
+    return false;
+  }
+
+  CUdevice dev;
+  err = cuDeviceGet(&dev, 0);
+  if (err) {
+    ERROR << "init_cuda:Unable to get CUDA device 0 because: "
+          << error_string(err) << ".";
+    return false;
+  }
+
+  err = cuCtxCreate(ctx, 0, dev);
+  if (err) {
+    ERROR << "init_cuda:Unable to create CUDA context because: "
+          << error_string(err) << ".";
+    return false;
+  }
+
+  return true;
+}
+
 Argus::CameraDevice* getCameraDevice(Argus::ICameraProvider* iProvider,
                                      uint32_t csi_id) {
   Argus::Status status;

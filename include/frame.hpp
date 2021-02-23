@@ -41,6 +41,8 @@ class Frame {
   cudaStream_t _stream;
   CUeglFrame _raw_frame;
   cv::cuda::GpuMat _mat;
+
+  bool sync();
 };
 
 }  // namespace nvcvcam
