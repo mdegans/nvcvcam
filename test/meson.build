@@ -1,3 +1,7 @@
+# Copyright (C) 2020 Michael de Gans
+
+# This build file may be modified and distributed under the terms
+# of the MIT license.  See the LICENSE.mit file for details.
 
 # this meson.build is for gst-check tests (mostly integration tests)
 
@@ -15,6 +19,12 @@ tests = [
     'sources': ['test_capture.cpp'],
     'suites': ['integration'],
   },
+  {
+    'description': 'test stoppable thread',
+    'filename': 'test_stoppable_thread',
+    'sources': ['test_stoppable_thread.cpp'],
+    'suites': ['unit'],
+  },
 ]
 
 # build and run tests (on ninja test)
@@ -24,8 +34,9 @@ foreach t: tests
     dependencies: nvcvcam_deps,
     cpp_args: [
       '-DLOGFILE="' + t['filename'] + '.txt"',
+      '-DTESTNAME="' + t['filename'],
     ],
-    include_directories: [nvcvcam_incdir, mmapi_incdirs],
+    include_directories: nvcvcam_incdir,
   )
   # skip running test if it's an interactive one
   if 'interactive' in t['suites']

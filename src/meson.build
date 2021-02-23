@@ -1,52 +1,52 @@
-# nvcam_config.hpp -- configuration for nvcam
-
+#ifndef DFFB9513_C1EE_4EAD_AD16_80CC4C1A3D30
+#define DFFB9513_C1EE_4EAD_AD16_80CC4C1A3D30
 # Copyright (C) 2020 Michael de Gans
 
 # This build file may be modified and distributed under the terms
 # of the MIT license.  See the LICENSE.mit file for details.
 
-# path to libargus .cmake files (change this if Nvidia moves the cmake modules
-# to a standard cmake module path)
-# mmapi_cmake_path = '/usr/src/jetson_multimedia_api/argus/cmake'
-
-# workaround:
-tegra_libdir = '/usr/lib/aarch64-linux-gnu/tegra/'
-mmapi_incdirs = [
-  include_directories('/usr/src/jetson_multimedia_api/include/'),
-  include_directories('/usr/src/jetson_multimedia_api/argus/samples/utils/'),
-]
+cmake_module_path = meson.current_source_dir() / '..' / 'cmake'
 
 # dependencies
 nvcvcam_deps = [
+  # FIXME(mdegans): find a way to check for cuda components
   dependency('opencv4',
     modules: ['cuda'],
   ),
-  # FIXME(mdegans): report that this does not seem to be working with current 
-  # meson. cmake_module_path is not respected.
-  # dependency('Argus',
-  #   method: 'cmake',
-  #   # cmake_module_path: mmapi_cmake_path,
-  #   cmake_args: '-DCMAKE_MODULE_PATH=' + mmapi_cmake_path,
-  # ),
-  cc.find_library('nvbuf_utils', dirs: tegra_libdir),
-  cc.find_library('nvargus', dirs: tegra_libdir),
+  dependency('Argus',  
+    cmake_module_path: cmake_module_path,
+  ),
+  dependency('EGL',
+    cmake_module_path: cmake_module_path,
+  ),
+  dependency('NVMMAPI',
+    cmake_module_path: cmake_module_path,
+  ),
   dependency('threads'),
-  dependency('cuda', modules: ['cudart']),
+  dependency('cuda',
+    modules: ['cudart']
+  ),
   dependency('boost',
+    # unlike CMake, 'thread' and 'system' are not implicit, apparently
     modules: ['log', 'thread', 'system'],
   )
 ]
 
 nvcvcam_src = [
-  'nvcvcam.cpp',
   'demosaic_kernel.cu',
+  'frame.cpp',
+  'nvcvcam_error.cpp',
+  'nvcvcam.cpp',
+  'producer.cpp',
+  'stoppable_thread.cpp',
+  'utils.cpp',
 ]
 
 libnvcvcam_libname = meson.project_name() + '-' + proj_ver_short
 libnvcvcam = library(libnvcvcam_libname, nvcvcam_src,
   dependencies: nvcvcam_deps,
   cpp_args: ['-fno-exceptions'],
-  include_directories: [nvcvcam_incdir, mmapi_incdirs],
+  include_directories: nvcvcam_incdir,
 )
 
 pkg = import('pkgconfig')
@@ -56,3 +56,4 @@ nvcvcam_pc = pkg.generate(libnvcvcam,
   url: project_url,
   install_dir: get_option('datadir') / 'pkgconfig',
 )
+#endif /* DFFB9513_C1EE_4EAD_AD16_80CC4C1A3D30 */
