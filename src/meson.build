@@ -29,9 +29,10 @@ nvcvcam_deps = [
   #   cmake_module_path: cmake_module_path,
   # ),
   dependency('threads'),
-  dependency('cuda',
-    modules: ['cudart', 'nppicc']
-  ),
+  # dependency('cuda',
+  #   modules: ['cudart', 'nppicc', 'nppc', 'nppisu', 'nppidei']
+  # ),
+  dependency('cuda'),
   dependency('boost',
     # unlike CMake, 'thread' and 'system' are not implicit, apparently
     modules: ['log', 'log_setup', 'thread', 'system'],

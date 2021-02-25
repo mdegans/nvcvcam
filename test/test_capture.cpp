@@ -91,7 +91,7 @@ int main() {
   assert(cv::imwrite("cv_debayered.png", downloaded));
 
   BOOST_LOG_TRIVIAL(info) << TESTNAME << ":getting our debayered";
-  assert(frame->get_debayered(debayered, nvcvcam::DebayerGains()));
+  assert(frame->get_debayered(debayered);
 
   BOOST_LOG_TRIVIAL(info) << TESTNAME << ":downloading debayered";
   debayered.download(downloaded);

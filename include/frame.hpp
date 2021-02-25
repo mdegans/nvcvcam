@@ -10,17 +10,11 @@
 #include <cudaEGL.h>
 #include <cuda_runtime.h>
 #include <opencv2/core/cuda.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include <atomic>
 
 namespace nvcvcam {
-
-struct DebayerGains {
-  float r;
-  float g;
-  float b;
-  float v;
-};
 
 class Frame {
  public:
@@ -33,31 +27,39 @@ class Frame {
   Frame& operator=(Frame const&) = delete;
 
   /**
-   * @brief Get the GpuMat owned by Frame. It's lifetime is tied to this frame
-   * and should not be used after the Frame is destroyed.
+   * @brief Get the raw bayer GpuMat owned by Frame. It's lifetime is tied to
+   * this frame and should not be used after the Frame is destroyed.
+   *
+   * NOTE: format is `CV_16UC1`, RGGB order.
    *
    * TODO(mdegans): figure out a way to guarantee this.
    *
    * @return cv::cuda::GpuMat
    */
   cv::cuda::GpuMat gpu_mat();
+
   /**
-   * @brief Get a debayered version of the GpuMat stored internally.
+   * @brief Get a debayered version of the GpuMat stored internally. Gamma
+   * correction is not applied, (this is the raw frame demosaiced, that's it).
    *
-   * @param out a GpuMat. If it's not of the same size and type, it will be
-   * reallocated (blocking).
-   * @param gains RGBV gains for debayering.
+   * @param out a GpuMat. If it's not of the same size and type (CV_16UC4), it
+   * will be reallocated (blocking).
+   * @param code OpenCV color space conversion code. Default RGGB bilinear. See:
+   * https://docs.opencv.org/4.5.1/db/d8c/group__cudaimgproc__color.html#ga7fb153572b573ebd2d7610fcbe64166e
+   * Malvar-He-Cutler is unsupported currently because it doesn't work with 16u.
    * @param stream an optional CUDA stream to run the kernel in (non-blocking)
-   * @param u16bpp whether to debayer to 16bit/channel/pixel (recommended for
-   * max quality). False debayers to 8 bit/pixel/channel.
    *
    * @return true on success
    * @return false on failure
    */
   bool get_debayered(cv::cuda::GpuMat& out,
-                     const DebayerGains& gains,
-                     cv::cuda::Stream& stream = cv::cuda::Stream::Null(),
-                     bool u16bpp = true);
+                     int code = cv::COLOR_BayerRG2BGR,
+                     cv::cuda::Stream& stream = cv::cuda::Stream::Null());
+
+  /**
+   * @return resolution of the frame.
+   */
+  cv::Size size();
 
  private:
   std::atomic_bool _synced;
@@ -68,11 +70,10 @@ class Frame {
   cv::cuda::GpuMat _mat;
 
   /**
-   * @brief Lazy sync of the stream. Only performed when a gpu_mat is first
-   * accessed.
+   * @brief Lazy sync of `_stream`. Only performed when `_mat` is accessed.
    *
-   * @return true
-   * @return false
+   * @return true on success
+   * @return false on failure to sync
    */
   bool sync();
 };
