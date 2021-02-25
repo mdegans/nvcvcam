@@ -11,6 +11,8 @@
 #include <cuda_runtime.h>
 #include <opencv2/core/cuda.hpp>
 
+#include <atomic>
+
 namespace nvcvcam {
 
 struct DebayerGains {
@@ -30,18 +32,45 @@ class Frame {
 
   Frame& operator=(Frame const&) = delete;
 
-  cv::cuda::GpuMat& gpu_mat() { return _mat; }
+  /**
+   * @brief Get the GpuMat owned by Frame. It's lifetime is tied to this frame
+   * and should not be used after the Frame is destroyed.
+   *
+   * TODO(mdegans): figure out a way to guarantee this.
+   *
+   * @return cv::cuda::GpuMat
+   */
+  cv::cuda::GpuMat gpu_mat();
+  /**
+   * @brief Get a debayered version of the GpuMat stored internally.
+   *
+   * @param out a GpuMat. If it's not of the same size and type, it will be
+   * reallocated (blocking).
+   * @param gains RGBV gains for debayering.
+   * @param stream an optional CUDA stream to run the kernel in (non-blocking)
+   *
+   * @return true on success
+   * @return false on failure
+   */
   bool get_debayered(cv::cuda::GpuMat& out,
                      const DebayerGains& gains,
                      cv::cuda::Stream& stream = cv::cuda::Stream::Null());
 
  private:
+  std::atomic_bool _synced;
   CUgraphicsResource _resource;
   CUeglStreamConnection _conn;
   cudaStream_t _stream;
   CUeglFrame _raw_frame;
   cv::cuda::GpuMat _mat;
 
+  /**
+   * @brief Lazy sync of the stream. Only performed when a gpu_mat is first
+   * accessed.
+   *
+   * @return true
+   * @return false
+   */
   bool sync();
 };
 

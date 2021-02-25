@@ -45,6 +45,13 @@ bool NvCvCam::open(uint32_t csi_id, uint32_t csi_mode) {
 
   INFO << "nvcvcam:Opening.";
 
+  if (!close()) {
+    ERROR << "nvcvcam:Could not reset camera state for open.";
+    return false;
+  }
+
+  // FIXME(mdegans): this code could break if open is called when already open.
+
   DEBUG << "nvcvcam:Initializing CUDA.";
   if (!utils::init_cuda(&_ctx)) {
     ERROR << "nvcvcam:Cuda initialization failed.";
@@ -59,7 +66,6 @@ bool NvCvCam::open(uint32_t csi_id, uint32_t csi_mode) {
     return false;
   }
 
-  // NOTE(medgans) order is important here. See `NOTE` in `close`.
   _producer.reset(new Producer(csi_id, csi_mode));
   if (!_producer->start()) {
     ERROR << "nvcvcam:Could not start Producer.";
@@ -70,6 +76,7 @@ bool NvCvCam::open(uint32_t csi_id, uint32_t csi_mode) {
   auto iraw_stream = Argus::interface_cast<Argus::IEGLOutputStream>(raw_stream);
   if (!iraw_stream) {
     ERROR << "nvcvcam:Could not get OutputStream from Producer.";
+    return false;
   }
 
   DEBUG << "nvcvcam:Connecting to producer.";
@@ -81,10 +88,13 @@ bool NvCvCam::open(uint32_t csi_id, uint32_t csi_mode) {
   }
   status = iraw_stream->waitUntilConnected();
   if (status) {
-    ERROR << "nvcvcam:Could not connect OutputStream becuase: (status "
+    ERROR << "nvcvcam:Could not connect OutputStream becuase: (Argus::Status "
           << status << ").";
+    return false;
   }
   DEBUG << "nvcvcam:Connected to producer.";
+
+  INFO << "nvcvcam:Ready!";
 
   return true;
 }
@@ -93,53 +103,70 @@ bool NvCvCam::close() {
   CUresult err;
   bool success = true;
 
-  if (!_producer) {
-    ERROR << "nvcvcam:Camera is not yet open.";
-    return false;
-  }
-  if (!_producer->ready()) {
-    ERROR << "nvcvcam:Camera is not yet ready.";
-    return false;
+  if (_cuda_conn || _producer || _cuda_stream || _ctx) {
+    INFO << "nvcvcam:Closing...";
+  } else {
+    // already closed
+    return true;
   }
 
-  INFO << "nvcvcam:Closing camera.";
-  success = _producer->stop();
-
-  DEBUG << "nvcvcam:Disconnecting from producer.";
-  err = cuEGLStreamConsumerDisconnect(&_cuda_conn);
-  if (err) {
-    ERROR << "nvcvcam:Could not disconnect from producer stream because: "
-          << error_string(err) << ".";
-    success = false;
+  if (_cuda_conn) {
+    DEBUG << "nvcvcam:Disconnecting from producer.";
+    err = cuEGLStreamConsumerDisconnect(&_cuda_conn);
+    _cuda_conn = nullptr;
+    if (err) {
+      ERROR << "nvcvcam:Could not disconnect from producer stream because: "
+            << error_string(err) << ".";
+      success = false;
+    }
   }
 
-  DEBUG << "nvcvcam:Destroying CUDA stream.";
-  auto errt = cudaStreamDestroy(_cuda_stream);
-  if (errt) {
-    ERROR << "nvcvcam:Could not destroy CUDA stream because: "
-          << error_string(errt) << ".";
-    success = false;
+  if (_producer) {
+    INFO << "nvcvcam:Closing producer.";
+    _producer->stop();
+    _producer.reset(nullptr);
   }
 
-  DEBUG << "nvcvcam:Destroying CUDA context.";
-  err = cuCtxDestroy(_ctx);
-  if (err) {
-    ERROR << "nvcvcam:Could not destroy cuda context because: "
-          << error_string(err) << ".";
-    success = false;
+  if (_cuda_stream) {
+    DEBUG << "nvcvcam:Destroying CUDA stream.";
+    auto errt = cudaStreamDestroy(_cuda_stream);
+    _cuda_stream = nullptr;
+    if (errt) {
+      ERROR << "nvcvcam:Could not destroy CUDA stream because: "
+            << error_string(errt) << ".";
+      success = false;
+    }
+  }
+
+  if (_ctx) {
+    DEBUG << "nvcvcam:Destroying CUDA context.";
+    err = cuCtxDestroy(_ctx);
+    _ctx = nullptr;
+    if (err) {
+      ERROR << "nvcvcam:Could not destroy cuda context because: "
+            << error_string(err) << ".";
+      success = false;
+    }
+  }
+
+  if (success) {
+    INFO << "nvcvcam:Closing done!";
+  } else {
+    ERROR << "nvcvcam:Failed to sucessfully close.";
   }
 
   return success;
 }
 
 std::unique_ptr<Frame> NvCvCam::capture() {
-  CUgraphicsResource tmp_res = nullptr;
+  CUgraphicsResource tmp_res = 0;
 
   if (!_producer) {
     ERROR << "nvcvcam:Camera is not yet open.";
     return nullptr;
   }
   if (!_producer->ready()) {
+    // this should never happen
     ERROR << "nvcvcam:Camera is not yet ready.";
     return nullptr;
   }
@@ -154,6 +181,10 @@ std::unique_ptr<Frame> NvCvCam::capture() {
 
   DEBUG << "nvcvcam:Returning Frame.";
   return std::make_unique<Frame>(tmp_res, _cuda_conn, _cuda_stream);
+}
+
+NvCvCam::~NvCvCam() {
+  close();
 }
 
 }  // namespace nvcvcam

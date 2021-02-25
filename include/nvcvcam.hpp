@@ -20,22 +20,17 @@
 namespace nvcvcam {
 
 class NvCvCam {
-  std::unique_ptr<Producer> _producer;
-  cudaStream_t _cuda_stream;
-  CUcontext _ctx;
-  CUeglStreamConnection _cuda_conn;
-
  public:
   NvCvCam()
       : _producer(nullptr),
         _cuda_stream(nullptr),
         _ctx(nullptr),
         _cuda_conn(nullptr){};
-  NvCvCam(const NvCvCam&) = delete;
+  NvCvCam(NvCvCam&& other) = default;
 
-  virtual ~NvCvCam() = default;
+  virtual ~NvCvCam();
 
-  NvCvCam& operator=(const NvCvCam&) = delete;
+  NvCvCam& operator=(NvCvCam&& other) = default;
 
   /**
    * @brief Open or re-open a camera.
@@ -66,6 +61,16 @@ class NvCvCam {
    * @return nullptr on failure.
    */
   std::unique_ptr<Frame> capture();
+
+ private:
+  // FIXME(mdegans): ToTW 187 says this is wrong and I should use optional for
+  //  delayed initialization:
+  //  https://abseil.io/tips/187
+  std::unique_ptr<Producer> _producer;
+  // FIXME(mdegans): Google style guide says trailing underscores are preferred.
+  cudaStream_t _cuda_stream;
+  CUcontext _ctx;
+  CUeglStreamConnection _cuda_conn;
 };
 
 }  // namespace nvcvcam

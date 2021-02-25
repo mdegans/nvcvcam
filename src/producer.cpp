@@ -138,6 +138,8 @@ bool Producer::setup() {
 
   auto res = _imode->getResolution();
   err = _isettings->setResolution(res);
+  DEBUG << "producer:Setting IEGLOutputStream resolution: " << res.width()
+        << "x" << res.height();
   if (err) {
     ERROR << "producer:IEGLOutputStreamSettings would not accept resolution: "
           << res.width() << "x" << res.height() << " (status " << err << ").";

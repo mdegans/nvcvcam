@@ -14,6 +14,9 @@
 #include <boost/log/utility/setup.hpp>
 #include <boost/log/utility/setup/file.hpp>
 
+#include <opencv2/cudaimgproc.hpp>
+#include <opencv2/highgui.hpp>
+
 #include <assert.h>
 
 void setup_logging() {
@@ -36,12 +39,22 @@ int main() {
   BOOST_LOG_TRIVIAL(info) << "starting test " << TESTNAME;
 
   nvcvcam::NvCvCam camera;
+  cv::cuda::GpuMat gpumat;
+  cv::Mat showme;
+  nvcvcam::DebayerGains gains{
+      1.0f,
+      1.0f,
+      1.0f,
+      1.0f,
+  };
 
   assert(camera.open());
   auto frame = camera.capture();
   assert(frame);
-  assert(!frame->gpu_mat().empty());
-  cv::imshow() assert(!debayered.empty());
+  frame->get_debayered(gpumat, gains);
+  gpumat.download(showme);
+  cv::imshow("debayered", showme);
+  cv::waitKey(0);
   assert(camera.close());
 
   BOOST_LOG_TRIVIAL(info) << "exiting test " << TESTNAME;

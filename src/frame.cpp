@@ -16,7 +16,7 @@ namespace nvcvcam {
 Frame::Frame(CUgraphicsResource resource,
              CUeglStreamConnection conn,
              cudaStream_t stream)
-    : _resource(resource), _conn(conn), _stream(stream), _raw_frame{}, _mat() {
+    : _resource(resource), _conn(conn), _stream(stream), _raw_frame(), _mat() {
   CUresult cu_err;
 
   DEBUG << "frame:Mapping from resource.";
@@ -31,23 +31,32 @@ Frame::Frame(CUgraphicsResource resource,
     return;
   }
 
-  if (!sync()) {
-    return;
-  }
-
   // map the data to a GpuMat
   _mat = cv::cuda::GpuMat(_raw_frame.height, _raw_frame.width, CV_16SC1,
                           _raw_frame.frame.pPitch[0], _raw_frame.pitch);
 }
 
 bool Frame::sync() {
-  auto err = cudaStreamSynchronize(_stream);
-  if (err) {
-    ERROR << "Could not synchronize cuda stream becuase: " << error_string(err)
-          << ".";
-    return false;
+  if (!_synced) {
+    auto err = cudaStreamSynchronize(_stream);
+    if (err) {
+      ERROR << "frame:Could not synchronize cuda stream becuase: "
+            << error_string(err) << ".";
+      return false;
+    } else {
+      _synced = true;
+    }
   }
+
   return true;
+}
+
+cv::cuda::GpuMat Frame::gpu_mat() {
+  if (!sync()) {
+    ERROR << "frame:Sync error. Returning empty GpuMat.";
+    return cv::cuda::GpuMat();
+  }
+  return _mat;
 }
 
 bool Frame::get_debayered(cv::cuda::GpuMat& out,
@@ -55,7 +64,9 @@ bool Frame::get_debayered(cv::cuda::GpuMat& out,
                           cv::cuda::Stream& stream) {
   (void)gains;
 
-  out.create(CV_8UC4, _raw_frame.width / 2, _raw_frame.height / 2);
+  out.create(_raw_frame.width / 2, _raw_frame.height / 2, CV_8UC4);
+  assert(out.size().width >= _raw_frame.width / 2);
+  assert(out.size().height >= _raw_frame.height / 2);
 
   if (!sync()) {
     return false;
@@ -73,7 +84,9 @@ bool Frame::get_debayered(cv::cuda::GpuMat& out,
 Frame::~Frame() {
   CUresult cu_err;
 
-  DEBUG << "frame:releasing resource in stream " << (size_t)_stream;
+  DEBUG << "frame:Releasing resource in stream: " << (size_t)_stream;
+  DEBUG << "frame:Connection: " << _conn;
+  DEBUG << "frame:Resource: " << _resource;
   cu_err = cuEGLStreamConsumerReleaseFrame(&_conn, _resource, &_stream);
   if (cu_err) {
     ERROR << "frame:Could not release resource because: "
