@@ -19,9 +19,11 @@ nvcvcam_incdir = include_directories('.')
 
 nvcvcam_public_headers = [
   nvcvcam_config_hpp,
-  'nvcvcam.hpp',
+  'frame.hpp',
   'nvcvcam_error.hpp',
-  'demosaic_kernel.hpp',
+  'nvcvcam.hpp',
+  'producer.hpp',
+  'stoppable_thread.hpp',
 ]
 
 install_headers(

@@ -4,6 +4,7 @@
 #include <Argus/Argus.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <npp.h>
 #include <boost/log/trivial.hpp>
 
 #include <memory>
@@ -22,6 +23,8 @@ namespace nvcvcam {
 const char* error_string(CUresult retcode);
 
 const char* error_string(cudaError_t retcode);
+
+const char* error_string(NppStatus status);
 
 }  // namespace nvcvcam
 

@@ -48,13 +48,16 @@ class Frame {
    * reallocated (blocking).
    * @param gains RGBV gains for debayering.
    * @param stream an optional CUDA stream to run the kernel in (non-blocking)
+   * @param u16bpp whether to debayer to 16bit/channel/pixel (recommended for
+   * max quality). False debayers to 8 bit/pixel/channel.
    *
    * @return true on success
    * @return false on failure
    */
   bool get_debayered(cv::cuda::GpuMat& out,
                      const DebayerGains& gains,
-                     cv::cuda::Stream& stream = cv::cuda::Stream::Null());
+                     cv::cuda::Stream& stream = cv::cuda::Stream::Null(),
+                     bool u16bpp = true);
 
  private:
   std::atomic_bool _synced;

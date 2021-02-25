@@ -5,9 +5,11 @@
  */
 
 #include "frame.hpp"
-#include "demosaic_kernel.hpp"
 #include "nvcvcam_error.hpp"
 #include "utils.hpp"
+
+#include <npp.h>
+#include <nppi_color_conversion.h>
 
 namespace nvcvcam {
 
@@ -61,22 +63,54 @@ cv::cuda::GpuMat Frame::gpu_mat() {
 
 bool Frame::get_debayered(cv::cuda::GpuMat& out,
                           const DebayerGains& gains,
-                          cv::cuda::Stream& stream) {
+                          cv::cuda::Stream& stream,
+                          bool u16bpp = true) {
   (void)gains;
+  (void)stream;
+  cudaStream_t nppstream = nullptr;
+  NppStreamContext nppctx();
+  NppStatus status;
+  NppiSize in_size{
+      height = _raw_frame.height,
+      width = _raw_frame.width,
+  };
+  NppiRect roi();
 
-  out.create(_raw_frame.width / 2, _raw_frame.height / 2, CV_8UC4);
-  assert(out.size().width >= _raw_frame.width / 2);
-  assert(out.size().height >= _raw_frame.height / 2);
+  out.create(_raw_frame.width, _raw_frame.height, CV_16UC4);
+
+  // check we're using the right stream
+  nppstream = nppGetStream();
+  if (nppstream != (cudaStream_t)stream.cudaPtr()) {
+    DEBUG << "frame:Resetting NPP CUDA stream.";
+    status = nppSetStream((cudaStream_t)stream.cudaPtr());
+    if (NPP_NO_ERROR != status) {
+      WARNING << "frame:Could not reset NPP CUDA stream because: "
+              << error_string(status) << ". Performance may suffer.";
+    }
+  }
+
+  // get npp context
+  status = nppGetStreamContext(&nppctx);
+  if (NPP_SUCCESS != status) {
+    ERROR << "frame:Could not get NPP stream context because: "
+          << error_string(status) << ".";
+    return false;
+  }
 
   if (!sync()) {
     return false;
   }
 
   // convert the bayer frame to bgra
-  cudaBayerDemosaic((CUdeviceptr)_raw_frame.frame.pPitch[0], _raw_frame.width,
-                    _raw_frame.height, _raw_frame.pitch,
-                    _raw_frame.eglColorFormat, (cudaStream_t)stream.cudaPtr(),
-                    (CUdeviceptr)out.cudaPtr());
+  // cudaBayerDemosaic((CUdeviceptr)_raw_frame.frame.pPitch[0],
+  // _raw_frame.width,
+  //                   _raw_frame.height, _raw_frame.pitch,
+  //                   _raw_frame.eglColorFormat,
+  //                   (cudaStream_t)stream.cudaPtr(),
+  //                   (CUdeviceptr)out.cudaPtr());
+
+  nppiCFAToRGB_16u_C1C3R((npp16u*)_raw_frame.frame.pPitch[0], _raw_frame.pitch,
+                         in_size, roi, (npp16u*)out.cudaPtr().out.step1());
 
   return true;
 }

@@ -94,6 +94,7 @@ bool printCUDAEGLFrame(const CUeglFrame& cudaEGLFrame) {
       break;
     case CU_EGL_COLOR_FORMAT_RGBA:
       colorFormatString = "RGBA";
+      break;
     case CU_EGL_COLOR_FORMAT_BAYER_RGGB:
       colorFormatString = "S16 Bayer RGGB";
       break;

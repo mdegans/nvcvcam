@@ -29,7 +29,6 @@
  */
 
 #include "nvcvcam.hpp"
-#include "demosaic_kernel.hpp"
 #include "nvcvcam_error.hpp"
 #include "utils.hpp"
 

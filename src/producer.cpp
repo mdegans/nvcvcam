@@ -272,6 +272,8 @@ Argus::ICameraProperties* Producer::get_properties() {
     ERROR << "producer:Could not get ICameraProperties interface from _device.";
     return nullptr;
   }
+
+  return properties;
 }
 
 std::vector<Argus::SensorMode*> Producer::get_modes() {

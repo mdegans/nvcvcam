@@ -22,18 +22,26 @@ nvcvcam_deps = [
   dependency('NVMMAPI',
     cmake_module_path: cmake_module_path,
   ),
+  # dependency('OpenGL',
+  #   cmake_module_path: cmake_module_path,
+  # ),
+  # dependency('OpenGLES',
+  #   cmake_module_path: cmake_module_path,
+  # ),
   dependency('threads'),
   dependency('cuda',
-    modules: ['cudart']
+    modules: ['cudart', 'nppicc']
   ),
   dependency('boost',
     # unlike CMake, 'thread' and 'system' are not implicit, apparently
-    modules: ['log', 'thread', 'system'],
-  )
+    modules: ['log', 'log_setup', 'thread', 'system'],
+  ),
+# cuEGLStreamConsumerReleaseFrame /usr/lib/aarch64-linux-gnu/tegra/libcuda.so.1.1 
+# cuEGLStreamConsumerReleaseFrame /usr/lib/aarch64-linux-gnu/tegra/libnvofsdk.so 
+  cc.find_library('cuda'),
 ]
 
 nvcvcam_src = [
-  'demosaic_kernel.cu',
   'frame.cpp',
   'nvcvcam_error.cpp',
   'nvcvcam.cpp',
@@ -45,7 +53,10 @@ nvcvcam_src = [
 libnvcvcam_libname = meson.project_name() + '-' + proj_ver_short
 libnvcvcam = library(libnvcvcam_libname, nvcvcam_src,
   dependencies: nvcvcam_deps,
-  cpp_args: ['-fno-exceptions'],
+  cpp_args: [
+    '-fno-exceptions',
+    '-DBOOST_LOG_DYN_LINK=1',
+  ],
   include_directories: nvcvcam_incdir,
 )
 

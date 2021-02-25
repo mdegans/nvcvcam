@@ -23,7 +23,7 @@ endif()
 # setup project
 project(nvcvcam
   VERSION "${VERSION_FILE_CONTENTS}"
-  LANGUAGES CXX CUDA
+  LANGUAGES CXX
 )
 
 # append our .cmake files in case Nvidia's aren't in a sane path

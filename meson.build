@@ -4,7 +4,7 @@
 # of the MIT license.  See the LICENSE.mit file for details.
 
 # setup the project's global options
-project('nvcvcam', ['cpp', 'cuda'],
+project('nvcvcam', ['cpp'],
   # we use the VERSION file as a source of truth for the semver
   version: run_command(
     'head', '-n', '1', files('VERSION'),
@@ -20,7 +20,6 @@ project('nvcvcam', ['cpp', 'cuda'],
 
 # the c++ compiler object
 cc = meson.get_compiler('cpp')
-nvcc = meson.get_compiler('cuda')
 
 # split the project version
 proj_ver = meson.project_version().split('.')

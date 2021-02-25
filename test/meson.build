@@ -34,7 +34,8 @@ foreach t: tests
     dependencies: nvcvcam_deps,
     cpp_args: [
       '-DLOGFILE="' + t['filename'] + '.txt"',
-      '-DTESTNAME="' + t['filename'],
+      '-DTESTNAME="' + t['filename'] + '"',
+      '-DBOOST_LOG_DYN_LINK=1',
     ],
     include_directories: nvcvcam_incdir,
   )
