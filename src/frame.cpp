@@ -87,7 +87,8 @@ bool Frame::get_debayered(cv::cuda::GpuMat& out,
   out.create(_raw_frame.width, _raw_frame.height, CV_16UC4);
   DEBUG << "frame:out.step == " << out.step;
   DEBUG << "frame:_raw_frame.pitch == " << _raw_frame.pitch;
-#ifdef USE_NPP cudaStream_t nppstream = nullptr;
+#ifdef USE_NPP
+  cudaStream_t nppstream = nullptr;
   NppStreamContext nppctx{};
   NppStatus status;
   NppiSize in_size{
@@ -163,7 +164,7 @@ bool Frame::get_debayered(cv::cuda::GpuMat& out,
   }
   // just one line, this is GLORIOUS. Npp may be fast, but readability beats
   // speed and OpenCV can be optimized were Nvidia interested in doing so.
-  cv::cuda::demosaicing(_mat, out, code, 4, stream);
+  cv::cuda::demosaicing(_mat, out, code, out.channels(), stream);
 #endif
   return true;
 }

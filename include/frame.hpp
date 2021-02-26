@@ -46,7 +46,7 @@ class Frame {
    * will be reallocated (blocking).
    * @param code OpenCV color space conversion code. Default RGGB bilinear. See:
    * https://docs.opencv.org/4.5.1/db/d8c/group__cudaimgproc__color.html#ga7fb153572b573ebd2d7610fcbe64166e
-   * Malvar-He-Cutler is unsupported currently because it doesn't work with 16u.
+   * NOTE: Malvar-He-Cutler is currently doesn't work with 16u.
    * @param stream an optional CUDA stream to run the kernel in (non-blocking)
    *
    * @return true on success

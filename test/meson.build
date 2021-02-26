@@ -20,6 +20,12 @@ tests = [
     'suites': ['integration'],
   },
   {
+    'description': 'test imshow',
+    'filename': 'test_imshow',
+    'sources': ['test_imshow.cpp'],
+    'suites': ['integration'],
+  },
+  {
     'description': 'test stoppable thread',
     'filename': 'test_stoppable_thread',
     'sources': ['test_stoppable_thread.cpp'],
