@@ -35,6 +35,8 @@
 
 #include "utils.hpp"
 
+#include <Argus/Ext/BayerSharpnessMap.h>
+
 namespace nvcvcam {
 
 bool Producer::setup() {
@@ -196,6 +198,20 @@ bool Producer::setup() {
     ERROR << "producer:Could not set SensorMode on Request (status " << err
           << ").";
     return false;
+  }
+
+  if (_iprovider->supportsExtension(Argus::EXT_BAYER_SHARPNESS_MAP)) {
+    DEBUG << "producer:Enabling Bayer sharpness map.";
+    auto bayer_settings =
+        Argus::interface_cast<Argus::Ext::IBayerSharpnessMapSettings>(_request);
+    if (!bayer_settings) {
+      ERROR << "producer:Could not get IBayerSharpnessMapSettings interface "
+               "from Request (status "
+            << err << ").";
+    }
+    bayer_settings->setBayerSharpnessMapEnable(true);
+  } else {
+    DEBUG << "producer:Bayer sharpness map not supported";
   }
 
   // success
