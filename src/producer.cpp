@@ -204,12 +204,6 @@ bool Producer::setup() {
 
 bool Producer::cleanup() {
   DEBUG << "producer:Cleaning up.";
-  // cleanup any camera provider and interface
-  if (_provider) {
-    DEBUG << "producer:Resetting CameraProvider to nullptr.";
-    _provider.reset(nullptr);
-  }
-  _iprovider = nullptr;
 
   // reset device
   _device = nullptr;
@@ -256,6 +250,13 @@ bool Producer::cleanup() {
     DEBUG << "producer:Resetting Request to nullptr.";
     _request.reset(nullptr);
   }
+
+  // cleanup any camera provider and interface
+  if (_provider) {
+    DEBUG << "producer:Resetting CameraProvider to nullptr.";
+    _provider.reset(nullptr);
+  }
+  _iprovider = nullptr;
 
   DEBUG << "producer:Cleanup done. Ready for start.";
   return true;
