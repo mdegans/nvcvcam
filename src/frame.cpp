@@ -146,7 +146,7 @@ bool Frame::get_debayered(cv::cuda::GpuMat& out,
     // FIXME(mdegans): throws NPP_STEP_ERROR, which says either step must be
     //  zero, but I can confirm it's not, and there's no source to examine so
     //  F this. I'll just use OpenCV since it doesn't make me want to jump off
-    //  a building.
+    //  a building. LOLS. looking at the source, OpenCV uses npp internally.
     return false;
   }
 
