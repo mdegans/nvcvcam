@@ -61,6 +61,13 @@ libnvcvcam = library(libnvcvcam_libname, nvcvcam_src,
   include_directories: nvcvcam_incdir,
 )
 
+# use this variable in superprojects
+nvcvcam_dep = declare_dependency(
+  link_with: libnvcvcam,
+  include_directories: nvcvcam_incdir,
+  dependencies: nvcvcam_deps,
+)
+
 pkg = import('pkgconfig')
 nvcvcam_pc = pkg.generate(libnvcvcam,
   description: project_description,
