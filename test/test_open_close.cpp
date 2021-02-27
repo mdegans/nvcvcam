@@ -33,13 +33,18 @@ void setup_logging() {
 int main() {
   setup_logging();
 
-  BOOST_LOG_TRIVIAL(info) << "starting test " << TESTNAME;
+  BOOST_LOG_TRIVIAL(info) << TESTNAME << ":start of Argus stress test";
 
   nvcvcam::NvCvCam camera;
 
-  assert(camera.open());
-  assert(camera.close());
+  // It's not enough to test that the camera opens and closes since it's
+  // possible for the argus daemon to get stuck. We need to ensure that this
+  // cannot happen, since the daemon itself apparently cannot.
+  for (size_t i = 0; i < 5; i++) {
+    assert(camera.open());
+    assert(camera.close());
+  }
 
-  BOOST_LOG_TRIVIAL(info) << "exiting test " << TESTNAME;
+  BOOST_LOG_TRIVIAL(info) << TESTNAME << ":end of Argus stress test";
   return 0;
 }
