@@ -33,10 +33,15 @@
 #include "stoppable_thread.hpp"
 
 #include <Argus/Argus.h>
+#include <experimental/optional>
+#include <mutex>
 
 namespace nvcvcam {
 
 class Producer : public thread::StoppableThread {
+  using OptionalRangeU64 = std::experimental::optional<Argus::Range<uint64_t>>;
+  using OptionalRangeFloat = std::experimental::optional<Argus::Range<float>>;
+
  private:
   uint _csi_id;
   uint _csi_mode;
@@ -53,9 +58,12 @@ class Producer : public thread::StoppableThread {
   Argus::IEGLOutputStreamSettings* _isettings;
   Argus::UniqueObj<Argus::OutputStream> _stream;
   Argus::IEGLOutputStream* _istream;
+
+  std::mutex _settings_mx;  // locks request and auto settings
   Argus::UniqueObj<Argus::Request> _request;
   Argus::IRequest* _irequest;
   Argus::ISourceSettings* _isourcesettings;
+  Argus::IAutoControlSettings* _iautocontrolsettings;
 
  protected:
   /**
@@ -134,9 +142,11 @@ class Producer : public thread::StoppableThread {
         _settings(nullptr),
         _stream(nullptr),
         _istream(nullptr),
+        _settings_mx(),
         _request(nullptr),
         _irequest(nullptr),
-        _isourcesettings(nullptr){};
+        _isourcesettings(nullptr),
+        _iautocontrolsettings(nullptr){};
   ~Producer() override;
 
   /**
@@ -161,13 +171,63 @@ class Producer : public thread::StoppableThread {
    * @return false on failure
    */
   bool get_resolution(Argus::Size2D<uint32_t>& out);
+
   /**
    * @brief Get a pointer to the OutputStream owned by this object. The pointer
    * is valid so long as the producer is `ready()`.
    *
+   * FIXME(mdegans): this could dangle. use a real, std, smart pointer and
+   * figure out Nvidia's way of destroying simple objects
+   *
    * @return Argus::OutputStream*
    */
   Argus::OutputStream* get_output_stream();
+
+  /**
+   * @brief sets exposure time range in nanoseconds
+   */
+  Argus::Status set_exposure_time_range(const Argus::Range<uint64_t> range);
+
+  /**
+   * @brief gets exposure time range in nanoseconds
+   */
+  OptionalRangeU64 get_exposure_time_range();
+
+  /**
+   * @brief Get the **supported** exposure time range for the current mode.
+   *
+   * @return an optional range (std::nullopt on failure)
+   */
+  OptionalRangeU64 get_supported_exposure_time_range();
+
+  /**
+   * @brief Get the **supported** frame duration range for the current mode.
+   *
+   * @return an optional range (std::nullopt on failure)
+   */
+  OptionalRangeU64 get_supported_frame_duration_range();
+
+  /**
+   * @brief Set the analog gain range.
+   *
+   * @param range to set
+   * @return Argus::Status of the set operation
+   */
+  Argus::Status set_analog_gain_range(const Argus::Range<float> range);
+
+  /**
+   * @brief Get the analog gain range.
+   *
+   * @return an optional range (std::nullopt on failure)
+   */
+  OptionalRangeFloat get_analog_gain_range();
+
+  /**
+   * @brief Get the **supported** analog gain range for the current mode.
+   *
+   * @return an optional range (std::nullopt on failure)
+   */
+  OptionalRangeFloat get_supported_analog_gain_range();
 };
 
 }  // namespace nvcvcam

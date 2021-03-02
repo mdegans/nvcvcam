@@ -162,6 +162,15 @@ bool Frame::get_debayered(cv::cuda::GpuMat& out,
   if (!sync()) {
     return false;
   }
+
+  // TODO(mdgans): bayer preprocessing:
+  //  * subtraction of black level
+  //  * per-channel gains
+  //  blocker is:
+  //  https://github.com/opencv/opencv/issues/18026
+  //  temporary workaround may be using a GpuMat initialized with a scalar
+  //  instead of a scalar directly.
+
   // just one line, this is GLORIOUS. Npp may be fast, but readability beats
   // speed and OpenCV can be optimized were Nvidia interested in doing so.
   cv::cuda::demosaicing(_mat, out, code, out.channels(), stream);

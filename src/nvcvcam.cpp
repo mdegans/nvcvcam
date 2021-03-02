@@ -36,6 +36,12 @@
 #include <cuda_runtime.h>
 #include <nvbuf_utils.h>
 
+#define IF_NOT_READY_RETURN(val)              \
+  if (!ready()) {                             \
+    ERROR << "nvcvcam:Camera not yet ready."; \
+    return val;                               \
+  }
+
 namespace nvcvcam {
 
 bool NvCvCam::open(uint32_t csi_id, uint32_t csi_mode) {
@@ -158,17 +164,9 @@ bool NvCvCam::close() {
 }
 
 std::unique_ptr<Frame> NvCvCam::capture() {
-  CUgraphicsResource tmp_res = 0;
+  IF_NOT_READY_RETURN(nullptr);
 
-  if (!_producer) {
-    ERROR << "nvcvcam:Camera is not yet open.";
-    return nullptr;
-  }
-  if (!_producer->ready()) {
-    // this should never happen
-    ERROR << "nvcvcam:Camera is not yet ready.";
-    return nullptr;
-  }
+  CUgraphicsResource tmp_res = 0;
 
   DEBUG << "nvcvcam:Getting an image from the EGLStream.";
   if (auto cu_err = cuEGLStreamConsumerAcquireFrame(&_cuda_conn, &tmp_res,
@@ -180,6 +178,103 @@ std::unique_ptr<Frame> NvCvCam::capture() {
 
   DEBUG << "nvcvcam:Returning Frame.";
   return std::make_unique<Frame>(tmp_res, _cuda_conn, _cuda_stream);
+}
+
+bool NvCvCam::ready() {
+  return _producer && _producer->ready();
+}
+
+bool NvCvCam::set_exposure(uint64_t ns) {
+  IF_NOT_READY_RETURN(false);
+
+  Argus::Range<uint64_t> range;
+
+  if (ns) {
+    DEBUG << "nvcvcam:Using manual exposure (" << ns << " ns).";
+    // set min and max to the same values, disabling any auto crap
+    range.max() = ns;
+    range.min() = ns;
+  } else {
+    DEBUG << "nvcvcam:Using auto exposure.";
+    if (auto supported = get_supported_exposure()) {
+      range = supported.value();
+    } else {
+      return false;
+    }
+  }
+
+  // Argus::Status is non-zero on failure
+  if (_producer->set_exposure_time_range(range)) {
+    return false;
+  }
+
+  return true;
+}
+
+std::experimental::optional<Argus::Range<uint64_t>> NvCvCam::get_exposure() {
+  IF_NOT_READY_RETURN(std::experimental::nullopt);
+  return _producer->get_exposure_time_range();
+}
+
+std::experimental::optional<Argus::Range<uint64_t>>
+NvCvCam::get_supported_exposure() {
+  IF_NOT_READY_RETURN(std::experimental::nullopt);
+
+  Argus::Range<uint64> range;
+
+  if (auto exp = _producer->get_supported_exposure_time_range()) {
+    range.max() = exp.value().max();
+    range.min() = exp.value().min();
+  } else {
+    return std::experimental::nullopt;
+  }
+  if (auto exp = _producer->get_supported_frame_duration_range()) {
+    range.max() = std::min<uint64_t>(exp.value().max(), range.max());
+    range.min() = std::max<uint64_t>(exp.value().min(), range.min());
+  } else {
+    return std::experimental::nullopt;
+  }
+
+  return range;
+}
+
+bool NvCvCam::set_analog_gain(float gain) {
+  IF_NOT_READY_RETURN(false);
+
+  Argus::Range<float> range;
+
+  if (gain >= 0.0) {
+    DEBUG << "nvcvcam:Using manual analog gain (" << gain << ").";
+    // set min and max to the same values, disabling any auto crap
+    range.max() = gain;
+    range.min() = gain;
+  } else {
+    DEBUG << "nvcvcam:Using auto analog gain.";
+    // negative number, we set the range to the max supported
+    if (auto supported = get_supported_analog_gain()) {
+      range = supported.value();
+    } else {
+      return false;
+    }
+  }
+
+  // Argus::Status is non-zero on failure
+  if (_producer->set_analog_gain_range(range)) {
+    return false;
+  }
+
+  return true;
+}
+
+std::experimental::optional<Argus::Range<float>> NvCvCam::get_analog_gain() {
+  IF_NOT_READY_RETURN(std::experimental::nullopt);
+  return _producer->get_analog_gain_range();
+}
+
+std::experimental::optional<Argus::Range<float>>
+NvCvCam::get_supported_analog_gain() {
+  IF_NOT_READY_RETURN(std::experimental::nullopt);
+  return _producer->get_supported_analog_gain_range();
 }
 
 NvCvCam::~NvCvCam() {

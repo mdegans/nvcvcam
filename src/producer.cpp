@@ -160,6 +160,9 @@ bool Producer::setup() {
     return false;
   }
 
+  // lock request settings
+  std::unique_lock<std::mutex> lock(_settings_mx);
+
   DEBUG << "producer:Creating capture request.";
   // NOTE: manual disables autofocus and awb
   _request.reset(_isession->createRequest(Argus::CAPTURE_INTENT_MANUAL, &err));
@@ -200,6 +203,15 @@ bool Producer::setup() {
     return false;
   }
 
+  // AutoControlSettings to set camera capture settings
+  _iautocontrolsettings = Argus::interface_cast<Argus::IAutoControlSettings>(
+      _irequest->getAutoControlSettings());
+  if (!_iautocontrolsettings) {
+    ERROR << "producer:Could not get IAutoControlSettings interface from "
+             "Request.";
+    return false;
+  }
+
   // if (_iprovider->supportsExtension(Argus::EXT_BAYER_SHARPNESS_MAP)) {
   //   DEBUG << "producer:Enabling Bayer sharpness map.";
   //   auto bayer_settings =
@@ -223,10 +235,6 @@ bool Producer::cleanup() {
 
   // reset device
   _device = nullptr;
-
-  // reset any modes
-  _mode = nullptr;
-  _imode = nullptr;
 
   // cleanup any session
   if (_isession) {
@@ -259,13 +267,18 @@ bool Producer::cleanup() {
     _stream.reset(nullptr);
   }
 
-  // cleanup any request
+  // cleanup any request and settings
+  std::unique_lock<std::mutex> lock(_settings_mx);
+  _mode = nullptr;
+  _imode = nullptr;
   _irequest = nullptr;
   _isourcesettings = nullptr;
+  _iautocontrolsettings = nullptr;
   if (_request) {
     DEBUG << "producer:Resetting Request to nullptr.";
     _request.reset(nullptr);
   }
+  lock.unlock();
 
   // cleanup any camera provider and interface
   if (_provider) {
@@ -402,6 +415,70 @@ bool Producer::get_resolution(Argus::Size2D<uint32_t>& out) {
   }
   out = _imode->getResolution();
   return true;
+}
+
+Argus::Status Producer::set_exposure_time_range(Argus::Range<uint64_t> range) {
+  std::unique_lock<std::mutex> lock(_settings_mx);
+  if (!(_request && _isourcesettings)) {
+    return Argus::Status::STATUS_UNAVAILABLE;
+  }
+  return _isourcesettings->setExposureTimeRange(range);
+}
+
+std::experimental::optional<Argus::Range<uint64_t>>
+Producer::get_exposure_time_range() {
+  std::unique_lock<std::mutex> lock(_settings_mx);
+  if (!(_request && _isourcesettings)) {
+    ERROR << "producer:Could not get exposure time range.";
+    return std::experimental::nullopt;
+  }
+  return _isourcesettings->getExposureTimeRange();
+}
+
+std::experimental::optional<Argus::Range<uint64_t>>
+Producer::get_supported_exposure_time_range() {
+  std::unique_lock<std::mutex> lock(_settings_mx);
+  if (!(_mode && _imode)) {
+    ERROR << "producer:Could not get supported exposure time range.";
+    return std::experimental::nullopt;
+  }
+  return _imode->getExposureTimeRange();
+}
+
+std::experimental::optional<Argus::Range<uint64_t>>
+Producer::get_supported_frame_duration_range() {
+  std::unique_lock<std::mutex> lock(_settings_mx);
+  if (!(_mode && _imode)) {
+    ERROR << "producer:Could not get supported frame duration range.";
+    return std::experimental::nullopt;
+  }
+  return _imode->getFrameDurationRange();
+}
+
+Argus::Status Producer::set_analog_gain_range(Argus::Range<float> range) {
+  std::unique_lock<std::mutex> lock(_settings_mx);
+  if (!(_request && _isourcesettings)) {
+    return Argus::Status::STATUS_UNAVAILABLE;
+  }
+  return _isourcesettings->setGainRange(range);
+}
+
+std::experimental::optional<Argus::Range<float>>
+Producer::get_analog_gain_range() {
+  std::unique_lock<std::mutex> lock(_settings_mx);
+  if (!(_request && _isourcesettings)) {
+    return std::experimental::nullopt;
+  }
+  return _isourcesettings->getGainRange();
+}
+
+std::experimental::optional<Argus::Range<float>>
+Producer::get_supported_analog_gain_range() {
+  std::unique_lock<std::mutex> lock(_settings_mx);
+  if (!(_mode && _imode)) {
+    return std::experimental::nullopt;
+  }
+  return _imode->getAnalogGainRange();
 }
 
 Argus::OutputStream* Producer::get_output_stream() {

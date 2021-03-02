@@ -62,6 +62,64 @@ class NvCvCam {
    */
   std::unique_ptr<Frame> capture();
 
+  /**
+   * @brief Check camera status.
+   *
+   * @return true if camera is ready for capture
+   * @return false if camera is not yet ready
+   */
+  virtual bool ready();
+
+  /**
+   * @brief Set the exposure in nanoseconds.
+   *
+   * @param ns desired exposure time in nanoseconds. 0 turns AE on.
+   *
+   * @return true on success
+   * @return false on failure
+   */
+  virtual bool set_exposure(uint64_t ns);
+
+  /**
+   * @brief Get the current exposure range. (a range because AE may be on).
+   *
+   * @return a range on success or std::nullopt on failure
+   */
+  virtual std::experimental::optional<Argus::Range<uint64_t>> get_exposure();
+
+  /**
+   * @brief Get the supported exposure range for this camera and mode.
+   *
+   * @return a range on success or std::nullopt on failure
+   */
+  virtual std::experimental::optional<Argus::Range<uint64_t>>
+  get_supported_exposure();
+
+  /**
+   * @brief Set the analog gain. To check the supported range, use
+   * `get_supported_analog_gain`. Negative values turn auto-gain on.
+   *
+   * @param gain to set
+   * @return true on success
+   * @return false on failure
+   */
+  virtual bool set_analog_gain(float gain);
+
+  /**
+   * @brief Get the analog gain range. (a range because auto-gain may be on).
+   *
+   * @return a range on success or std::nullopt on failure
+   */
+  virtual std::experimental::optional<Argus::Range<float>> get_analog_gain();
+
+  /**
+   * @brief Get the supported analog gain range.
+   *
+   * @return a range on success or std::nullopt on failure
+   */
+  virtual std::experimental::optional<Argus::Range<float>>
+  get_supported_analog_gain();
+
  private:
   // FIXME(mdegans): ToTW 187 says this is wrong and I should use optional for
   //  delayed initialization:

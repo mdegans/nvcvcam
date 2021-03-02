@@ -31,6 +31,12 @@ tests = [
     'sources': ['test_stoppable_thread.cpp'],
     'suites': ['unit'],
   },
+  {
+    'description': 'test setters/getters',
+    'filename': 'test_settings',
+    'sources': ['test_settings.cpp'],
+    'suites': ['integration'],
+  },
 ]
 
 # build and run tests (on ninja test)
