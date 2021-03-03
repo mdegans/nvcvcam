@@ -42,8 +42,7 @@ class Frame {
    * @brief Get a debayered version of the GpuMat stored internally. Gamma
    * correction is not applied, (this is the raw frame demosaiced, that's it).
    *
-   * @param out a GpuMat. If this is empty, it will be reallocated to match
-   * the internal frame's size with 16bpp color.
+   * @param out a GpuMat. Passed to cv::cuda::demosaicing's out parameter.
    * @param code OpenCV color space conversion code. Default RGGB bilinear. See:
    * https://docs.opencv.org/4.5.1/db/d8c/group__cudaimgproc__color.html#ga7fb153572b573ebd2d7610fcbe64166e
    * NOTE: Malvar-He-Cutler is currently doesn't work with 16u.
