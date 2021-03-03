@@ -83,6 +83,9 @@ cv::cuda::GpuMat Frame::gpu_mat() {
 bool Frame::get_debayered(cv::cuda::GpuMat& out,
                           int code,
                           cv::cuda::Stream& stream) {
+  if (out.empty()) {
+    out.create(cv::Size(_raw_frame.width, _raw_frame.height), CV_16UC4);
+  }
 #ifdef USE_NPP
   cudaStream_t nppstream = nullptr;
   NppStreamContext nppctx{};
