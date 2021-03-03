@@ -232,6 +232,11 @@ bool Producer::setup() {
 
 bool Producer::on_running() {
   auto err = update_request();
+  if (err == Argus::STATUS_UNAVAILABLE) {
+    DEBUG << "producer:Not yet available. Retrying.";
+    std::this_thread::sleep_for(std::chrono::microseconds(1000));
+    on_running();
+  }
   if (err) {
     return false;
   }
