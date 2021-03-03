@@ -83,10 +83,9 @@ cv::cuda::GpuMat Frame::gpu_mat() {
 bool Frame::get_debayered(cv::cuda::GpuMat& out,
                           int code,
                           cv::cuda::Stream& stream) {
-  // reallocate out if necessary
-  out.create(_raw_frame.width, _raw_frame.height, CV_16UC4);
-  DEBUG << "frame:out.step == " << out.step;
-  DEBUG << "frame:_raw_frame.pitch == " << _raw_frame.pitch;
+  if (out.empty()) {
+    out.create(cv::Size(_raw_frame.width, _raw_frame.height), CV_16UC4);
+  }
 #ifdef USE_NPP
   cudaStream_t nppstream = nullptr;
   NppStreamContext nppctx{};
