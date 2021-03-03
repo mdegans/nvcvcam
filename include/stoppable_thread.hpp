@@ -77,7 +77,7 @@ class StoppableThread {
    * @return true to continue iteration
    * @return false to stop iteration
    */
-  virtual bool tick() = 0;
+  virtual bool tick() { return true; }
   /**
    * @brief cleanup any resources needed for tick
    *
@@ -132,7 +132,7 @@ class StoppableThread {
    * @return false if not in the `RUNNING` state
    */
   bool ready() { return _state == State::RUNNING; };
-};
+};  // namespace nvcvcam::thread
 
 }  // namespace nvcvcam::thread
 #endif /* E589C439_F4B4_4D67_9114_8A83FA001DB2 */

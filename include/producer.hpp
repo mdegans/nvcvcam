@@ -74,20 +74,19 @@ class Producer : public thread::StoppableThread {
    */
   bool setup() override;
   /**
-   * @brief This implementation of `tick` enqueues capture requests while the
-   * FIFO buffer is not full.
-   *
-   * @return on success (continues iteration)
-   * @return on failure (superclass will set failed status and call cleanup).
-   */
-  bool tick() override;
-  /**
    * @brief Clean up any camera resources held by the producer.
    *
    * @return true on success
    * @return false on failure
    */
   bool cleanup() override;
+  /**
+   * @brief Starts repeating captures.
+   *
+   * @return true on success
+   * @return false on failure
+   */
+  bool on_running() override;
   /**
    * @brief Get the Camera's properites interface.
    *
@@ -117,15 +116,11 @@ class Producer : public thread::StoppableThread {
    */
   bool set_mode(uint32_t csi_mode);
   /**
-   * @brief Request Argus to perform a capture.
+   * @brief Update the repeating capture request.
    *
-   * @param timeout before failure.
-   *
-   * @return true on success
-   * @return false on failure
+   * @return Argus::Status of operation
    */
-  bool enqueue_request(
-      std::chrono::nanoseconds timeout = std::chrono::nanoseconds::max());
+  Argus::Status update_request();
 
  public:
   Producer(uint csi_id = 0, uint csi_mode = 0, uint32_t fifo_length = 2)
