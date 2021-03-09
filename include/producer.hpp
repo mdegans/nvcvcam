@@ -30,6 +30,7 @@
 #ifndef F3BA22E3_6D3F_48E7_81A6_F33CB155167B
 #define F3BA22E3_6D3F_48E7_81A6_F33CB155167B
 
+#include "format.hpp"
 #include "stoppable_thread.hpp"
 
 #include <Argus/Argus.h>
@@ -43,27 +44,26 @@ class Producer : public thread::StoppableThread {
   using OptionalRangeFloat = std::experimental::optional<Argus::Range<float>>;
 
  private:
-  uint _csi_id;
-  uint _csi_mode;
-  uint32_t _fifo_length;
+  uint _csi_id = 0;
+  uint _csi_mode = 0;
 
   Argus::UniqueObj<Argus::CameraProvider> _provider;
-  Argus::ICameraProvider* _iprovider;
-  Argus::CameraDevice* _device;
-  Argus::SensorMode* _mode;
-  Argus::ISensorMode* _imode;
+  Argus::ICameraProvider* _iprovider = nullptr;
+  Argus::CameraDevice* _device = nullptr;
+  Argus::SensorMode* _mode = nullptr;
+  Argus::ISensorMode* _imode = nullptr;
   Argus::UniqueObj<Argus::CaptureSession> _session;
-  Argus::ICaptureSession* _isession;
+  Argus::ICaptureSession* _isession = nullptr;
   Argus::UniqueObj<Argus::OutputStreamSettings> _settings;
-  Argus::IEGLOutputStreamSettings* _isettings;
+  Argus::IEGLOutputStreamSettings* _isettings = nullptr;
   Argus::UniqueObj<Argus::OutputStream> _stream;
-  Argus::IEGLOutputStream* _istream;
+  Argus::IEGLOutputStream* _istream = nullptr;
 
   std::mutex _settings_mx;  // locks request and auto settings
   Argus::UniqueObj<Argus::Request> _request;
-  Argus::IRequest* _irequest;
-  Argus::ISourceSettings* _isourcesettings;
-  Argus::IAutoControlSettings* _iautocontrolsettings;
+  Argus::IRequest* _irequest = nullptr;
+  Argus::ISourceSettings* _isourcesettings = nullptr;
+  Argus::IAutoControlSettings* _iautocontrolsettings = nullptr;
 
  protected:
   /**
@@ -123,26 +123,23 @@ class Producer : public thread::StoppableThread {
   Argus::Status update_request();
 
  public:
-  Producer(uint csi_id = 0, uint csi_mode = 0, uint32_t fifo_length = 2)
+  Producer(uint csi_id = 0, uint csi_mode = 0, Format format = Format::BAYER)
       : _csi_id(csi_id),
         _csi_mode(csi_mode),
-        _fifo_length(fifo_length),
         _provider(nullptr),
-        _iprovider(nullptr),
-        _device(nullptr),
-        _mode(nullptr),
-        _imode(nullptr),
         _session(nullptr),
-        _isession(nullptr),
         _settings(nullptr),
         _stream(nullptr),
-        _istream(nullptr),
         _settings_mx(),
         _request(nullptr),
-        _irequest(nullptr),
-        _isourcesettings(nullptr),
-        _iautocontrolsettings(nullptr){};
+        format(format){};
   ~Producer() override;
+
+  /**
+   * @brief format to capture in
+   *
+   */
+  const Format format;
 
   /**
    * @brief Get the current sensor mode interface.

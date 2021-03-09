@@ -7,6 +7,8 @@
 #ifndef DD21561A_FBDD_4A5F_A71F_D6ACC829E542
 #define DD21561A_FBDD_4A5F_A71F_D6ACC829E542
 
+#include "format.hpp"
+
 #include <cudaEGL.h>
 #include <cuda_runtime.h>
 #include <opencv2/core/cuda.hpp>
@@ -16,13 +18,14 @@
 
 namespace nvcvcam {
 
-class Frame {
+class Frame final {
  public:
   Frame(Frame const&) = delete;
   Frame(CUgraphicsResource resource,
         CUeglStreamConnection conn,
-        cudaStream_t stream = nullptr);
-  virtual ~Frame();
+        cudaStream_t stream = nullptr,
+        Format format = Format::BAYER);
+  ~Frame();
 
   Frame& operator=(Frame const&) = delete;
 
@@ -39,35 +42,17 @@ class Frame {
   cv::cuda::GpuMat gpu_mat();
 
   /**
-   * @brief Get a debayered version of the GpuMat stored internally. Gamma
-   * correction is not applied, (this is the raw frame demosaiced, that's it).
-   *
-   * @param out a GpuMat. If empty, create is called to match the input frame
-   * and depth. Passed to cv::cuda::demosaicing's out parameter.
-   * @param code OpenCV color space conversion code. Default RGGB bilinear. See:
-   * https://docs.opencv.org/4.5.1/db/d8c/group__cudaimgproc__color.html#ga7fb153572b573ebd2d7610fcbe64166e
-   * NOTE: Malvar-He-Cutler is currently doesn't work with 16u.
-   * @param stream an optional CUDA stream to run the kernel in (non-blocking)
-   *
-   * @return true on success
-   * @return false on failure
+   * @brief Format of this frame.
    */
-  bool get_debayered(cv::cuda::GpuMat& out,
-                     int code = cv::COLOR_BayerRG2BGR,
-                     cv::cuda::Stream& stream = cv::cuda::Stream::Null());
-
-  /**
-   * @return resolution of the frame.
-   */
-  cv::Size size();
+  const Format format;
 
  private:
-  std::atomic_bool _synced;
-  CUgraphicsResource _resource;
-  CUeglStreamConnection _conn;
-  cudaStream_t _stream;
-  CUeglFrame _raw_frame;
-  cv::cuda::GpuMat _mat;
+  CUgraphicsResource _resource = nullptr;
+  CUeglStreamConnection _conn = nullptr;
+  cudaStream_t _stream = nullptr;
+  std::atomic_bool _synced = ATOMIC_VAR_INIT(false);
+  CUeglFrame _raw_frame = CUeglFrame();
+  cv::cuda::GpuMat _mat = cv::cuda::GpuMat();
 
   /**
    * @brief Lazy sync of `_stream`. Only performed when `_mat` is accessed.
@@ -79,4 +64,5 @@ class Frame {
 };
 
 }  // namespace nvcvcam
+
 #endif /* DD21561A_FBDD_4A5F_A71F_D6ACC829E542 */

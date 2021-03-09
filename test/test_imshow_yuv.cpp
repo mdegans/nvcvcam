@@ -18,7 +18,9 @@
 #include <opencv2/cudawarping.hpp>
 #include <opencv2/highgui.hpp>
 
-#include <assert.h>
+#include <cassert>
+
+#define LOG INFO << TESTNAME << ":"
 
 void setup_logging() {
   boost::log::register_simple_formatter_factory<
@@ -36,55 +38,56 @@ void setup_logging() {
 
 int main() {
   setup_logging();
-  INFO << TESTNAME << ":starting";
+  LOG << "starting";
 
-  INFO << TESTNAME << ":creating camera";
+  cv::Size displaysize(cv::Size(640, 480));
+
+  LOG << "creating camera";
   nvcvcam::NvCvCam camera;
 
-  cv::cuda::GpuMat mat_a;  // debayered
-  cv::cuda::GpuMat mat_b;  // scaled
-  cv::cuda::GpuMat mat_c;  // 8 bit
-  cv::Mat showme(cv::Size(640, 480), CV_8UC4);
+  cv::cuda::GpuMat yuv;
+  cv::cuda::GpuMat bgr;
+  cv::cuda::GpuMat scaled;
+  cv::cuda::GpuMat eightbpp;
 
-  INFO << TESTNAME << ":opening camera";
-  assert(camera.open());
+  cv::Mat showme(displaysize, CV_8UC4);
 
-  INFO << TESTNAME << ":beginning captures. press esc to stop.";
+  LOG << " opening camera in NV12 mode";
+  assert(camera.open(0, 0, nvcvcam::Format::NV12));
+
+  LOG << "beginning captures. press esc to stop.";
   do {
-    INFO << TESTNAME << ":capturing frame";
+    LOG << ":capturing frame";
     auto frame = camera.capture();
     assert(frame);
 
-    INFO << TESTNAME << ":debayering frame";
-    cv::cuda::demosaicing(frame->gpu_mat(), mat_a, cv::COLOR_BayerRG2BGR, 4);
+    yuv = frame->gpu_mat();
+    assert(!yuv.empty());
 
-    INFO << TESTNAME << ":scaling to 640x480";
-    cv::cuda::resize(mat_a, mat_b, cv::Size(640, 480));
+    // LOG << "converting NV12 to BGRA";
+    // // cv::COLOR_YUV2BGR_NV12 is unsupported because FML
+    // cv::cuda::cvtColor(yuv, bgr, cv::COLOR_YUV2BGR, 4);
 
-    // optional gamma correction / lut / whatever here
+    LOG << "scaling to 640x480";
+    cv::cuda::resize(yuv, scaled, displaysize);
 
-    INFO << TESTNAME << ":converting to 8 bit";
-    // https://answers.opencv.org/question/207313/conversion-16bit-image-to-8-bit-image/
-    // see note: The factor is not 1/256 but 1/257 because you map range
-    // (0-65535) to (0-255), 65535/255 = 257. This is a common off-by-one error
-    // in range mapping.
-    mat_b.convertTo(mat_c, CV_8UC4, 1.0 / 257.0);
+    LOG << "converting to 8bpp";
+    scaled.convertTo(eightbpp, CV_8UC4, 1.0 / 257.0);
 
     // NOTE(mdegans): while the imshow docs claims you can, it does not appear
     //  GpuMat is supported in imshow directly because:
     //  "error: (-213:The function/feature is not implemented) You should
     //  explicitly call download method for cuda::GpuMat object in function
-    //  'getMat_'" EDIT: Derp. This is because opencv was built without OpenGl
-    //  support
-    INFO << TESTNAME << ":downloading frame";
-    mat_c.download(showme);
+    //  'getMat_'"
+    LOG << "downloading frame";
+    scaled.download(showme);
 
     cv::imshow("capture view, press esc to exit", showme);
   } while (27 != cv::waitKey(1));
 
-  INFO << TESTNAME << ":closing camera";
+  LOG << "closing camera";
   assert(camera.close());
 
-  INFO << "exiting test " << TESTNAME;
+  LOG << "exiting test";
   return 0;
 }

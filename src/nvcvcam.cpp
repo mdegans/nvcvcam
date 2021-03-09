@@ -44,7 +44,7 @@
 
 namespace nvcvcam {
 
-bool NvCvCam::open(uint32_t csi_id, uint32_t csi_mode) {
+bool NvCvCam::open(uint32_t csi_id, uint32_t csi_mode, Format format) {
   CUresult cu_err;
   Argus::Status status;
 
@@ -71,7 +71,7 @@ bool NvCvCam::open(uint32_t csi_id, uint32_t csi_mode) {
     return false;
   }
 
-  _producer.reset(new Producer(csi_id, csi_mode));
+  _producer = std::make_unique<Producer>(csi_id, csi_mode, format);
   if (!_producer->start()) {
     ERROR << "nvcvcam:Could not start Producer.";
     return false;
@@ -177,7 +177,8 @@ std::unique_ptr<Frame> NvCvCam::capture() {
   }
 
   DEBUG << "nvcvcam:Returning Frame.";
-  return std::make_unique<Frame>(tmp_res, _cuda_conn, _cuda_stream);
+  return std::make_unique<Frame>(tmp_res, _cuda_conn, _cuda_stream,
+                                 _producer->format);
 }
 
 bool NvCvCam::ready() {

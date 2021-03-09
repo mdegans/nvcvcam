@@ -83,11 +83,13 @@ int main() {
     auto frame = camera.capture();
     assert(frame);
 
-    LOG << "getting debayered frame";
-    assert(frame->get_debayered(mat_a));
+    INFO << TESTNAME << ":debayering frame";
+    cv::cuda::demosaicing(frame->gpu_mat(), mat_a, cv::COLOR_BayerRG2BGRA, 4);
 
     LOG << "scaling to 640x480";
     cv::cuda::resize(mat_a, mat_b, cv::Size(640, 480));
+
+    // optional gamma correction / lut / whatever here
 
     LOG << "converting to 8 bit";
     // https://answers.opencv.org/question/207313/conversion-16bit-image-to-8-bit-image/
@@ -95,8 +97,6 @@ int main() {
     // (0-65535) to (0-255), 65535/255 = 257. This is a common off-by-one error
     // in range mapping.
     mat_b.convertTo(mat_c, CV_8UC4, 1.0 / 257.0);
-
-    // optional gamma correction / lut / whatever here
 
     // NOTE(mdegans): while the imshow docs claims you can, it does not appear
     //  GpuMat is supported in imshow directly because:

@@ -26,6 +26,18 @@ tests = [
     'suites': ['integration'],
   },
   {
+    'description': 'test imshow yuv',
+    'filename': 'test_imshow_yuv',
+    'sources': ['test_imshow_yuv.cpp'],
+    'suites': ['integration'],
+  },
+  {
+    'description': 'test imshow 8 bit greyscale',
+    'filename': 'test_imshow_y8',
+    'sources': ['test_imshow_y8.cpp'],
+    'suites': ['integration'],
+  },
+  {
     'description': 'test stoppable thread',
     'filename': 'test_stoppable_thread',
     'sources': ['test_stoppable_thread.cpp'],

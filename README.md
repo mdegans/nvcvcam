@@ -7,7 +7,7 @@ avoid any unnecessary conversions through a GStreamer pipeline.
 
 ## Features:
 * Raw, Bayer format capture
-* 16bpp/channel BGRA demosaiced output
+* YUV Capture (12 and 16 bit)
 * stream support for non-blocking operations where possible
 
 ## Requirements

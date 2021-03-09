@@ -7,6 +7,7 @@
 #ifndef B7D7826A_3396_4C10_A39A_9CC7D54E3972
 #define B7D7826A_3396_4C10_A39A_9CC7D54E3972
 
+#include "format.hpp"
 #include "frame.hpp"
 #include "nvcvcam_config.hpp"
 #include "producer.hpp"
@@ -21,11 +22,7 @@ namespace nvcvcam {
 
 class NvCvCam {
  public:
-  NvCvCam()
-      : _producer(nullptr),
-        _cuda_stream(nullptr),
-        _ctx(nullptr),
-        _cuda_conn(nullptr){};
+  NvCvCam() = default;
   NvCvCam(NvCvCam&& other) = default;
 
   virtual ~NvCvCam();
@@ -37,12 +34,14 @@ class NvCvCam {
    *
    * @param csi_id the CSI id of the camera.
    * @param csi_mode the Argus CSI mode to request.
+   * @param format to capture in
    *
    * @return true on success
    * @return false on failure
    */
   virtual bool open(uint32_t csi_id = defaults::CSI_ID,
-                    uint32_t csi_mode = defaults::CSI_MODE);
+                    uint32_t csi_mode = defaults::CSI_MODE,
+                    Format format = Format::BAYER);
 
   /**
    * @brief Close the camera and free any resources.
@@ -124,11 +123,11 @@ class NvCvCam {
   // FIXME(mdegans): ToTW 187 says this is wrong and I should use optional for
   //  delayed initialization:
   //  https://abseil.io/tips/187
-  std::unique_ptr<Producer> _producer;
+  std::unique_ptr<Producer> _producer = nullptr;
   // FIXME(mdegans): Google style guide says trailing underscores are preferred.
-  cudaStream_t _cuda_stream;
-  CUcontext _ctx;
-  CUeglStreamConnection _cuda_conn;
+  cudaStream_t _cuda_stream = nullptr;
+  CUcontext _ctx = nullptr;
+  CUeglStreamConnection _cuda_conn = nullptr;
 };
 
 }  // namespace nvcvcam

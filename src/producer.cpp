@@ -37,7 +37,18 @@
 
 #include <Argus/Ext/BayerSharpnessMap.h>
 
+#include <map>
+
 namespace nvcvcam {
+
+static const std::map<Format, Argus::PixelFormat> FORMAT_TO_ARGUS({
+    {Format::BAYER, Argus::PIXEL_FMT_RAW16},
+    {Format::Y16, Argus::PIXEL_FMT_P016},          // because y16 is broken
+    {Format::Y8, Argus::PIXEL_FMT_YCbCr_420_888},  // because y8 is broken
+    {Format::YUV420, Argus::PIXEL_FMT_YCbCr_420_888},
+    {Format::NV12, Argus::PIXEL_FMT_YCbCr_420_888},
+    {Format::P016, Argus::PIXEL_FMT_P016},
+});
 
 bool Producer::setup() {
   Argus::Status err;  // argus error status (0 is success)
@@ -120,9 +131,9 @@ bool Producer::setup() {
     return false;
   }
 
-  err = _isettings->setPixelFormat(Argus::PIXEL_FMT_RAW16);
+  err = _isettings->setPixelFormat(FORMAT_TO_ARGUS.at(format));
   if (err) {
-    ERROR << "producer:Could not set RAW16 pixel format.";
+    ERROR << "producer:Could not set pixel format.";
     return false;
   }
 
@@ -131,12 +142,6 @@ bool Producer::setup() {
     ERROR << "producer:Could not set EGL_STREAM_MODE_MAILBOX";
     return false;
   }
-
-  // err = _isettings->setFifoLength(_fifo_length);
-  // if (err) {
-  //   ERROR << "producer:Could not set FifoLength to " << _fifo_length << ".";
-  //   return false;
-  // }
 
   auto res = _imode->getResolution();
   err = _isettings->setResolution(res);

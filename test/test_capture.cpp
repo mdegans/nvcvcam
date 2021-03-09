@@ -43,7 +43,6 @@ int main() {
   cv::cuda::GpuMat converted;
   cv::cuda::GpuMat cv_debayered;
   cv::Mat downloaded;
-  cv::cuda::GpuMat debayered;
 
   BOOST_LOG_TRIVIAL(info) << TESTNAME << ":opening camera";
   assert(camera.open());
@@ -90,23 +89,8 @@ int main() {
   BOOST_LOG_TRIVIAL(info) << TESTNAME << ":saving cv_debayered.png";
   assert(cv::imwrite("cv_debayered.png", downloaded));
 
-  BOOST_LOG_TRIVIAL(info) << TESTNAME << ":getting our debayered";
-  assert(frame->get_debayered(debayered));
-
-  BOOST_LOG_TRIVIAL(info) << TESTNAME << ":downloading debayered";
-  debayered.download(downloaded);
-
-  BOOST_LOG_TRIVIAL(info) << TESTNAME << ":checking downloaded";
-  assert(!downloaded.empty());
-
-  BOOST_LOG_TRIVIAL(info) << TESTNAME << ":saving debayered.png";
-  assert(cv::imwrite("debayered.png", downloaded));
-
   BOOST_LOG_TRIVIAL(info) << TESTNAME << ":destroying Frame";
   frame.reset();
-
-  BOOST_LOG_TRIVIAL(info) << TESTNAME << ":checking debayered";
-  assert(!debayered.empty());
 
   BOOST_LOG_TRIVIAL(info) << TESTNAME << ":closing camera";
   assert(camera.close());
