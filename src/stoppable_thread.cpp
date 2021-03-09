@@ -97,13 +97,17 @@ bool StoppableThread::wait(State state, std::chrono::nanoseconds timeout) {
   // wait for the chosen state
   DEBUG << "stoppable:Waiting for state: " << state << " for "
         << timeout.count() << "ns";
-  while (_state != state) {
+  while (_state != state && !_stopping && _state != State::FAILED) {
     auto elapsed = std::chrono::high_resolution_clock::now() - start_time;
     if (elapsed > timeout) {
       ERROR << "stoppable:Timed out waiting for thread RUNNING state.";
       return false;
     }
     std::this_thread::sleep_for(std::chrono::nanoseconds(SLEEP_INTERVAL_NS));
+  }
+
+  if (_state == State::FAILED) {
+    return false;
   }
 
   return true;

@@ -23,19 +23,19 @@ tests = [
     'description': 'test imshow',
     'filename': 'test_imshow',
     'sources': ['test_imshow.cpp'],
-    'suites': ['integration'],
+    'suites': ['integration', 'interactive'],
   },
   {
     'description': 'test imshow yuv',
     'filename': 'test_imshow_yuv',
     'sources': ['test_imshow_yuv.cpp'],
-    'suites': ['integration'],
+    'suites': ['integration', 'interactive'],
   },
   {
     'description': 'test imshow 8 bit greyscale',
     'filename': 'test_imshow_y8',
     'sources': ['test_imshow_y8.cpp'],
-    'suites': ['integration'],
+    'suites': ['integration', 'interactive'],
   },
   {
     'description': 'test stoppable thread',
@@ -47,7 +47,7 @@ tests = [
     'description': 'test setters/getters',
     'filename': 'test_settings',
     'sources': ['test_settings.cpp'],
-    'suites': ['integration'],
+    'suites': ['integration', 'interactive'],
   },
 ]
 
