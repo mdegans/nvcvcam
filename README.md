@@ -46,23 +46,17 @@ int main() {
 
   cv::cuda::GpuMat debayered;  // this is reused
 
-  assert(camera.open())  // optional CSI id and CSI mode may be supplied
+  assert(camera.open())  // CSI id, CSI mode, and image format may be supplied
 
   while (auto frame = camera.capture()) {
     // Raw bayer mapped from the Argus EGL stream. It can be modified but **must
     // not outlive the frame**, since the frame is also mapped. No copies here.
     auto raw = frame->gpu_mat();
 
-    // Get a debayered version of the frame. It's safe for this to outlive the
-    // `Frame` itself. You can also use cv::cuda::demosaicing to accomplish much
-    // the same feat. It's not necessary to get the raw frame also for this to
-    // work. An optional cv::cuda::Stream stream may be supplied here.
-    assert(frame->get_debayered(debayered));
+    // Do things with frame (eg. demosaic, gamma correct, apply a lut,
+    // download to cpu, imshow it, twist it, bop it, whatever).
 
-    // Do things with frame (eg. download to cpu, imshow it, twist it, bop it,
-    // whatever).
-
-  }  // `frame` is destroyed, and it's mapped frame released here.
+  }  // `frame` is destroyed, and it's resources released here.
 
   return 0;  // camera.close() is called here, if it hasn't already been.
 }

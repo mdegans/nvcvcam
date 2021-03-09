@@ -20,6 +20,7 @@
 
 #endif  // USE_NPP
 
+#include <cassert>
 #include <map>
 
 namespace nvcvcam {
@@ -37,7 +38,8 @@ static const std::map<CUarray_format, int> CU_FORMAT_TO_CV({
     {CU_AD_FORMAT_UNSIGNED_INT8, CV_8U},
     {CU_AD_FORMAT_UNSIGNED_INT16, CV_16U},
     // 16I is mapped to 16U because this appears to be the actual format.
-    // 16I gives incorrect results, even when converted to 16U using
+    // 16I gives incorrect results ("black sun"), even when converted to 16U
+    // using:
     // mat_a.convertTo(mat_b, CV_16UC1, 2.0);
     {CU_AD_FORMAT_SIGNED_INT16, CV_16U},
     {CU_AD_FORMAT_HALF, CV_16F},
@@ -55,7 +57,6 @@ Frame::Frame(CUgraphicsResource resource,
     : format(format), _resource(resource), _conn(conn), _stream(stream) {
   CUresult cu_err;
   uint height;
-  size_t step;
 
   DEBUG << "frame:Mapping from resource.";
   cu_err = cuGraphicsResourceGetMappedEglFrame(&_raw_frame, resource, 0, 0);
@@ -72,7 +73,8 @@ Frame::Frame(CUgraphicsResource resource,
 
   if (format == Format::YUV420 || format == Format::NV12 ||
       format == Format::P016) {
-    height = _raw_frame.height * 3U / 2U;
+    assert(_raw_frame.height % 2 == 0);
+    height = _raw_frame.height + _raw_frame.height / 2U;
   } else {
     height = _raw_frame.height;
   }
@@ -86,21 +88,23 @@ Frame::Frame(CUgraphicsResource resource,
     return;
   }
 
-  if (_raw_frame.frameType == CU_EGL_FRAME_TYPE_ARRAY) {
-    // Doesn't seem to make a difference. Still illegal access whenever
-    // not using bayer.
-    step = cv::Mat::CONTINUOUS_FLAG;
-  } else if (_raw_frame.frameType == CU_EGL_FRAME_TYPE_PITCH) {
-    step = static_cast<size_t>(_raw_frame.pitch);
-  } else {
-    // should never happen
-    ERROR << "Invalid CUeglFrameType. Fatal.";
-    std::terminate();
-  }
+  // This does not help: YUV still has illegal memory access
+  // if (_raw_frame.frameType == CU_EGL_FRAME_TYPE_ARRAY) {
+  //   // Doesn't seem to make a difference. Still illegal access whenever
+  //   // not using bayer.
+  //   step = cv::Mat::CONTINUOUS_FLAG;
+  // } else if (_raw_frame.frameType == CU_EGL_FRAME_TYPE_PITCH) {
+  //   step = static_cast<size_t>(_raw_frame.pitch);
+  // } else {
+  //   // should never happen
+  //   ERROR << "Invalid CUeglFrameType. Fatal.";
+  //   std::terminate();
+  // }
 
   // map the data to a GpuMat
   _mat = cv::cuda::GpuMat(height, _raw_frame.width, cv_type_of(_raw_frame),
-                          _raw_frame.frame.pArray[0], step);
+                          _raw_frame.frame.pArray[0], _raw_frame.pitch);
+  // NOTE: when pitch is 0, CV uses the width * size of data type
 }
 
 bool Frame::sync() {

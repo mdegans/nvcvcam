@@ -46,7 +46,7 @@ int main() {
   nvcvcam::NvCvCam camera;
 
   cv::cuda::GpuMat yuv;
-  cv::cuda::GpuMat bgr;
+  // cv::cuda::GpuMat bgr;
   cv::cuda::GpuMat scaled;
   cv::cuda::GpuMat eightbpp;
 
