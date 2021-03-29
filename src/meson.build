@@ -51,14 +51,14 @@ nvcvcam_src = [
   'utils.cpp',
 ]
 
-libnvcvcam_libname = meson.project_name() + '-' + proj_ver_short
-libnvcvcam = library(libnvcvcam_libname, nvcvcam_src,
+libnvcvcam = library(meson.project_name(), nvcvcam_src,
   dependencies: nvcvcam_deps,
   cpp_args: [
     '-fno-exceptions',
     '-DBOOST_LOG_DYN_LINK=1',
   ],
   include_directories: nvcvcam_incdir,
+  version: meson.project_version(),
 )
 
 # use this variable in superprojects
