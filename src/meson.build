@@ -74,5 +74,6 @@ nvcvcam_pc = pkg.generate(libnvcvcam,
   libraries: nvcvcam_deps,
   url: project_url,
   install_dir: get_option('datadir') / 'pkgconfig',
+  subdirs: meson.project_name(),
 )
 #endif /* DFFB9513_C1EE_4EAD_AD16_80CC4C1A3D30 */
