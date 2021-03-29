@@ -59,6 +59,7 @@ libnvcvcam = library(meson.project_name(), nvcvcam_src,
   ],
   include_directories: nvcvcam_incdir,
   version: meson.project_version(),
+  install: true,
 )
 
 # use this variable in superprojects
